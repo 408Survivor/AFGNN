@@ -1,0 +1,13 @@
+{
+  "split": "test",
+  "checkpoint": "checkpoints/ablation_no_temporal_best.pt",
+  "config": "configs/ablation/ablation_no_temporal.yaml",
+  "timestamp": "2026-06-25T11:21:26.293153",
+  "metrics": {
+    "accuracy": 0.7075471698113207,
+    "precision": 0.7479674796747967,
+    "recall": 0.7479674796747967,
+    "f1": 0.7479674796747967,
+    "auc": 0.7631314515392345
+  }
+}

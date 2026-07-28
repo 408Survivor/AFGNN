@@ -1,0 +1,13 @@
+{
+  "split": "test",
+  "checkpoint": "checkpoints/ablation_region_mask_02_right_eyebrow_best.pt",
+  "config": "configs/ablation/ablation_region_mask_02_right_eyebrow.yaml",
+  "timestamp": "2026-06-25T23:20:27.417921",
+  "metrics": {
+    "accuracy": 0.7452830188679245,
+    "precision": 0.7851239669421488,
+    "recall": 0.7723577235772358,
+    "f1": 0.7786885245901639,
+    "auc": 0.8120946378003105
+  }
+}

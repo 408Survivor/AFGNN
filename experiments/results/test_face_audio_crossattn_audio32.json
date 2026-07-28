@@ -1,0 +1,13 @@
+{
+  "split": "test",
+  "checkpoint": "checkpoints/afgnn_face_only_best.pt",
+  "config": "configs/afgnn_face_only.yaml",
+  "timestamp": "2026-06-22T13:10:05.661202",
+  "metrics": {
+    "accuracy": 0.7169811320754716,
+    "precision": 0.7202797202797203,
+    "recall": 0.8373983739837398,
+    "f1": 0.7744360902255639,
+    "auc": 0.7704393897871562
+  }
+}

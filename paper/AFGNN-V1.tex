@@ -1,0 +1,461 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+%Template version as of 6/27/2024
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{AFGNN: Adaptive Facial-Audio Graph Neural Network with Cross-Modal Attention for Depression Detection}
+
+\author{
+\IEEEauthorblockN{Anonymous Author(s)}
+\IEEEauthorblockA{Institution / Affiliation\\
+Email: anonymous@example.com}
+}
+
+\maketitle
+
+\begin{abstract}
+Depression is a leading cause of disability worldwide, yet its screening remains limited by the scarcity of clinicians and the subjectivity of traditional assessments.
+User-generated video blogs (vlogs) offer an accessible, low-cost alternative for passive depression screening.
+However, automatic detection is challenging due to noisy in-the-wild recordings, weakly labelled data, and small sample sizes.
+In this paper, we propose \textbf{AFGNN}, a multimodal graph neural network that encodes facial landmarks and acoustic features as spatio-temporal graphs and fuses them through cross-modal attention.
+Through an extensive graph-structure analysis on the public D-Vlog dataset, we notably find that, for depression detection, simple static-temporal face graphs consistently outperform feature-similarity and motion-based dynamic graphs.
+We further stabilize training with AUC-based early stopping, validation-set F1 threshold tuning, and focal loss, and improve robustness by averaging predictions from an ensemble of independently trained models.
+Our final ensemble achieves an F1-score of \textbf{0.8077} and an AUC of \textbf{0.8041} on the official D-Vlog test split, outperforming recently reported state-of-the-art results.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Depression detection, graph neural networks, multimodal fusion, cross-modal attention, D-Vlog.
+\end{IEEEkeywords}
+
+\section{Introduction}
+\label{sec:intro}
+
+Major depressive disorder affects more than 300 million people worldwide and is a leading cause of disability and suicide~
+\cite{yoon2022dvlog}.
+Conventional diagnosis relies on clinical interviews and self-reported scales such as PHQ-9, which are time-consuming, subjective, and require trained clinicians.
+These barriers motivate the development of automatic, passive screening tools that analyse behavioural signals from everyday videos.
+
+User-generated video blogs (vlogs) have emerged as a promising source of multimodal depression cues~
+\cite{yoon2022dvlog}.
+The public D-Vlog dataset provides pre-extracted 68-point facial landmarks and 25-dimensional acoustic descriptors for each video, enabling privacy-preserving depression research without raw pixel data.
+Existing approaches typically treat face and audio as frame sequences and apply heavy CNN, RNN, or Transformer backbones~
+\cite{zhou2023tamfn,tao2024depmstat,hua2026asym}.
+While effective, these methods often ignore the inherent anatomical structure of the face, require hundreds of millions of parameters, and generalise poorly across datasets due to overfitting on small training splits.
+
+We argue that facial landmarks are naturally graph-structured: landmarks are connected by anatomical edges within each frame and by temporal edges across frames.
+Graph Neural Networks (GNNs) therefore offer a lightweight and interpretable alternative that explicitly encodes facial topology and temporal dynamics.
+Similarly, acoustic features can be organised as a temporal chain graph, where adjacent frames capture prosodic continuity.
+
+In this paper, we propose the \textbf{Adaptive Facial-Audio Graph Neural Network (AFGNN)}, which models both face and audio as spatio-temporal graphs and fuses them through a cross-modal attention module (see Figure~\ref{fig:framework}).
+Our experiments on the official D-Vlog split reveal a practically important finding: although dynamic graph edges are popular in the literature, they consistently degrade performance on the small D-Vlog training set compared with simple static-temporal graphs.
+With AUC-based early stopping, focal loss, validation-set F1 threshold search, and model ensembling, AFGNN achieves an F1-score of \textbf{0.8077} and an AUC of \textbf{0.8041} while using about $1.2\times10^5$ parameters.
+
+Our contributions are summarised as follows:
+\begin{itemize}
+    \item We propose AFGNN, a lightweight multimodal GNN for depression detection that represents facial landmarks and acoustic features as spatio-temporal graphs and fuses them with cross-modal attention.
+    \item We conduct a systematic graph-structure ablation and show that, counter to common intuition, adaptive dynamic edges hurt performance on small-scale depression data; static-temporal graphs generalise best.
+    \item We introduce a robust training protocol including AUC-based early stopping, validation-set F1 threshold tuning, focal loss, and model ensembling.
+    \item We achieve state-of-the-art results on the D-Vlog test split (F1 = 0.8077, AUC = 0.8041) and provide interpretable visualisations of the learned facial and audio attention patterns.
+\end{itemize}
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Depression Detection from Multimodal Video}
+
+Early automatic depression estimation focused on controlled clinical interviews.
+Benchmark challenges such as AVEC~2013/2014~
+\cite{valstar2014avec} and AVEC~2016/2017~
+\cite{ringeval2017avec} used the Audio-Visual Depressive Language Corpus and the DAIC-WOZ corpus~
+\cite{gratch2014daic}, where participants were interviewed by a virtual agent.
+These datasets fostered classical audio-visual fusion methods and early deep-learning approaches.
+More recently, in-the-wild vlog datasets such as D-Vlog~
+\cite{yoon2022dvlog} have enabled large-scale studies under realistic recording conditions.
+
+Most deep methods treat face and audio as frame sequences and apply CNNs, RNNs, or Transformers~
+\cite{zhou2023tamfn,tao2024depmstat,hua2026asym,he2021automatic,caiinet2023}.
+For example, He et al.~
+\cite{he2021automatic} proposed a CNN with local and global attention for depression recognition from facial videos.
+These methods typically fuse modalities through concatenation, attention, or tensor fusion.
+More recently, Mou et al.~
+\cite{disentangled2025} combined transformers with graph attention fusion for depression detection, Cha et al.~
+\cite{mogam2024} built object co-occurrence graphs from vlog frames, and He et al.~
+\cite{dpdnet2024} proposed a GNN-enhanced transformer across multiple depression datasets.
+Our work differs by representing both modalities as graphs and explicitly analysing the effect of graph topology.
+
+\subsection{Graph Neural Networks for Facial Behaviour}
+
+GNNs are naturally suited to model non-Euclidean data such as facial landmarks.
+Early graph-based facial expression recognition built fully-connected landmark graphs and processed them with RNNs~
+\cite{zhong2019graphbrnn}, while later work integrated CNN features with graph convolutional networks~
+\cite{liao2022fergcn}.
+Graph Convolutional Networks (GCN)~
+\cite{kipf2017gcn} provide a spectral message-passing foundation, and Graph Attention Networks (GAT)~
+\cite{velickovic2018graph} learn adaptive edge weights, making them a natural choice for landmark graphs.
+Fwa~
+\cite{stgat2022} further demonstrated that GATs over facial landmarks achieve competitive emotion recognition with lightweight models.
+In depression recognition specifically, Guo et al.~
+\cite{guo2021deep} exploited 3D facial landmark geometry with deep networks.
+A recent survey by Georgiou et al.~
+\cite{ferreview2026} categorises graph-based facial expression methods into landmark/region graphs, AU-correlation graphs, and spatio-temporal graphs.
+
+A common trend is to enrich graphs with \emph{dynamic} edges, such as motion consistency or feature similarity, to capture expression-specific interactions.
+However, dynamic graphs add parameters and can overfit when training data are scarce.
+In our experiments, we systematically compare static, temporal, and dynamic edges and find that the simplest static-temporal graph works best for depression detection.
+
+\subsection{Cross-Modal Fusion}
+
+Multimodal fusion strategies can be categorised as early, late, and intermediate fusion.
+Early work often concatenated hand-crafted features or unimodal embeddings, while recent methods exploit cross-modal attention to let one modality attend to another.
+Tsai et al.~
+\cite{tsai2019mult} introduced directional cross-modal attention for unaligned multimodal sequences, inspiring later depression-detection architectures.
+In audio-visual emotion recognition, Dhanith et al.~
+\cite{avtca2024} showed that transformer fusion with cross-attention outperforms simple feature concatenation, and Gnana Praveen and Alam~
+\cite{cmt2024} demonstrated the effectiveness of cross-modal transformers for audio-visual fusion.
+We adopt a lightweight cross-modal attention module that lets the face embedding attend to audio and vice versa, without the heavy sequence alignments required by general multimodal transformers.
+
+
+\section{Method}
+\label{sec:method}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{afgnn_framework.pdf}
+\caption{Overview of the proposed AFGNN. Facial landmarks and acoustic features are represented as spatio-temporal graphs, encoded by GAT-based branches, fused through cross-modal attention, and classified by an MLP.}
+\label{fig:framework}
+\end{figure}
+
+\subsection{Problem Formulation}
+
+Given a video vlog, we are provided with $T$ raw frames of facial landmarks $\mathbf{V}\in\mathbb{R}^{T\times 136}$ (68 landmarks, 2 coordinates) and $T$ raw frames of acoustic features $\mathbf{A}\in\mathbb{R}^{T\times 25}$ (openSMILE low-level descriptors)~
+\cite{eyben2010opensmile}.
+Both modalities are down-sampled to fixed clip lengths $T_v$ and $T_a$, respectively, and used to construct graphs.
+The goal is to predict a binary depression label $y\in\{0,1\}$.
+
+\subsection{Face Graph Construction}
+\label{sec:face_graph}
+
+For a sampled clip of $T_v$ frames, the face graph $G_f=(\mathcal{V}_f,\mathcal{E}_f)$ has $T_v\times 68$ nodes.
+Each node corresponds to a landmark $i$ at frame $t$.
+The node feature is
+\begin{equation}
+\mathbf{x}_{i,t}=\big[\mathbf{p}_{i,t};\,\dot{\mathbf{p}}_{i,t};\,\mathbf{r}_i\big],
+\label{eq:face_node}
+\end{equation}
+where $\mathbf{p}_{i,t}\in\mathbb{R}^2$ is the landmark coordinate, $\dot{\mathbf{p}}_{i,t}\in\mathbb{R}^2$ is its temporal velocity, and $\mathbf{r}_i\in\{0,1\}^{9}$ is a one-hot vector indicating the facial region (face contour, eyebrows, nose, eyes, mouth)~
+\cite{king2009dlib}.
+The resulting feature dimension is 13.
+
+Edges are constructed as follows:
+\begin{itemize}
+    \item \textbf{Static edges}: pre-defined anatomical chains within each frame (e.g., face contour, eye rings, mouth rings).
+    \item \textbf{Temporal edges}: connect the same landmark across consecutive frames.
+    \item \textbf{Self-loops}: optional $(u,u)$ edges for numerical stability and self-aggregation.
+    \item \textbf{Dynamic edges} (ablation): $k$-nearest neighbours within each frame based on feature similarity or motion consistency.
+\end{itemize}
+Each edge is assigned a type (static, temporal, dynamic) and a scalar weight.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.98\linewidth]{figure2_face_graph.pdf}
+\caption{Facial graph construction. (a) The 68-point landmark topology, coloured by facial region. (b) A zoomed view of the left eye shows intra-frame anatomical edges. (c) Temporal edges connect the same landmark across consecutive frames.}
+\label{fig:face_graph}
+\end{figure}
+
+\subsection{Audio Graph Construction}
+
+The audio graph $G_a=(\mathcal{V}_a,\mathcal{E}_a)$ treats each sampled frame as a node.
+Node features are the 25-dimensional acoustic descriptors, standardized by training-set statistics.
+Edges form a simple \emph{bidirectional chain} connecting adjacent frames.
+We also experiment with self-loops and skip edges, but the plain chain proves sufficient.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.98\linewidth]{figure3_audio_graph.pdf}
+\caption{Audio graph construction. (a) Frame-level acoustic feature sequence. (b) The temporal chain graph connects adjacent time frames bidirectionally. (c) Example readout attention weights; higher weights indicate more salient frames for depression classification.}
+\label{fig:audio_graph}
+\end{figure}
+
+\subsection{GNN Encoders}
+
+Both graphs are encoded by Graph Attention Networks (GAT)~
+\cite{velickovic2018graph}.
+For the face branch, we use a 3-layer GAT with hidden dimension 128 and 4 attention heads.
+For the audio branch, a 2-layer GAT with hidden dimension 64 and 4 heads.
+Each intermediate layer applies LayerNorm, ELU activation, and dropout.
+The final layer uses a single head.
+
+A graph-level embedding is obtained via \texttt{AttentionalAggregation}: a small MLP learns a scalar gate for each node, and the final node representations are weighted and summed:
+\begin{equation}
+\mathbf{h}=\sum_{u\in\mathcal{G}} \sigma\big(g(\mathbf{h}_u)\big)\,\mathbf{h}_u,
+\end{equation}
+where $g(\cdot)$ is the gate MLP, $\sigma$ is the sigmoid function, and $\mathbf{h}_u$ denotes the representation of node $u$ after the last GAT layer.
+
+\subsection{Cross-Modal Attention Fusion}
+
+Let $\mathbf{h}_f\in\mathbb{R}^{d_f}$ and $\mathbf{h}_a\in\mathbb{R}^{d_a}$ be the face and audio graph embeddings.
+We first project each embedding into a shared hidden space $\mathbb{R}^{d_h}$ and a modality-specific value space:
+\begin{align}
+\mathbf{q}_f &= \mathbf{W}_q^{(f)} \mathbf{h}_f, &
+\mathbf{k}_a &= \mathbf{W}_k^{(a)} \mathbf{h}_a, &
+\mathbf{v}_a &= \mathbf{W}_v^{(a)} \mathbf{h}_a, \\
+\mathbf{q}_a &= \mathbf{W}_q^{(a)} \mathbf{h}_a, &
+\mathbf{k}_f &= \mathbf{W}_k^{(f)} \mathbf{h}_f, &
+\mathbf{v}_f &= \mathbf{W}_v^{(f)} \mathbf{h}_f.
+\end{align}
+
+The face-to-audio and audio-to-face attention gates are scalar scores computed by a scaled element-wise dot product followed by a sigmoid:
+\begin{align}
+\alpha_{f\to a} &= \sigma\!\left(\frac{1}{\sqrt{d_h}} \sum_{i=1}^{d_h} q_{f,i}\,k_{a,i}\right), \\
+\alpha_{a\to f} &= \sigma\!\left(\frac{1}{\sqrt{d_h}} \sum_{i=1}^{d_h} q_{a,i}\,k_{f,i}\right).
+\end{align}
+Because each graph is compressed to a single embedding, there is only one key/value pair per direction; the sigmoid therefore acts as a soft gating function rather than a distribution over multiple positions.
+
+The attended contexts are added back as residuals:
+\begin{align}
+\tilde{\mathbf{h}}_f &= \mathbf{h}_f + \alpha_{f\to a}\,\mathbf{v}_a, \\
+\tilde{\mathbf{h}}_a &= \mathbf{h}_a + \alpha_{a\to f}\,\mathbf{v}_f.
+\end{align}
+
+The fused vector $\mathbf{z}=[\tilde{\mathbf{h}}_f;\tilde{\mathbf{h}}_a]$ is fed to a 2-layer MLP classifier.
+
+\subsection{Training Protocol}
+
+Because the D-Vlog training set is small and imbalanced, we adopt several stabilizers:
+\begin{itemize}
+    \item \textbf{Focal loss}~
+\cite{lin2017focal}: down-weights easy negatives and focuses on hard examples:
+    \begin{equation}
+    \mathcal{L}_{\text{focal}} = -\alpha_t (1-p_t)^\gamma \log(p_t).
+    \end{equation}
+    We set $\alpha=0.25$ and $\gamma=2$.
+    \item \textbf{AUC-based early stopping}: the model with the highest validation AUC is saved.
+    AUC is threshold-independent and less sensitive to class imbalance than F1.
+    \item \textbf{Validation F1 threshold search}: after each epoch, we search over thresholds $\tau\in[0.01,0.99]$ and store the $\tau$ that maximizes validation F1.
+    This threshold is used at test time.
+    \item Gradient clipping (max norm 1.0), Adam optimizer with weight decay $10^{-4}$, and ReduceLROnPlateau scheduler.
+\end{itemize}
+
+\subsection{Model Ensemble}
+
+On small datasets, random initialization strongly influences the final model.
+We therefore train several independent instances of the same configuration and average their predicted probabilities before thresholding.
+Averaging reduces variance and yields more stable test performance.
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Dataset and Metrics}
+
+We evaluate on the public D-Vlog dataset~
+\cite{yoon2022dvlog}, which contains 961 vlogs (555 depressed, 406 control) from 816 individuals.
+The official split is 7:1:2, yielding 647 training, 102 validation, and 212 test samples.
+Visual features are 68 facial landmarks extracted by dlib~
+\cite{king2009dlib}, and acoustic features are 25 openSMILE descriptors~
+\cite{eyben2010opensmile}.
+Because only pre-extracted landmarks and acoustic descriptors are used, no raw facial pixels or identifiable personal data are processed in this study.
+
+We report Accuracy (Acc), Precision (Prec), Recall (Rec), F1-score, and Area Under the ROC Curve (AUC).
+All metrics are computed on the held-out test set.
+
+\begin{table}[t]
+\centering
+\caption{D-Vlog dataset statistics.}
+\label{tab:dataset}
+\begin{tabular}{lccc}
+\toprule[1.2pt]
+Split & Total & Depressed & Control \\
+\midrule[0.8pt]
+Train & 647 & 373 & 274 \\
+Validation & 102 & 57 & 45 \\
+Test & 212 & 125 & 87 \\
+\bottomrule[1.2pt]
+\end{tabular}
+\end{table}
+
+\subsection{Implementation Details}
+
+All experiments are implemented with PyTorch Geometric~
+\cite{fey2019fast}.
+The face graph uses $T_v=32$ sampled frames; the audio graph uses $T_a=32$ frames.
+The face GNN has 3 layers (hidden 128, 4 heads), the audio GNN has 2 layers (hidden 64, 4 heads).
+Dropout is 0.3.
+We train with Adam ($lr=10^{-3}$, weight decay $10^{-4}$) for up to 200 epochs, with early-stopping patience 15 on validation AUC.
+The batch size is 16.
+The full AFGNN model contains approximately $1.2\times10^5$ trainable parameters.
+We also experimented with landmark sequence augmentation (random affine transforms, Gaussian noise, and temporal masking) but found it degraded validation AUC, so it was disabled in the final configuration.
+
+\subsection{Comparison with State-of-the-Art}
+
+Table~\ref{tab:sota} compares our final 3-seed AFGNN ensemble with recent methods reported on D-Vlog.
+Our model achieves the highest F1 and AUC.
+It is worth noting that some competing methods report results under 5-fold cross-validation, whereas we strictly follow the official train/validation/test split.
+
+\begin{table}[t]
+\centering
+\caption{Comparison with state-of-the-art methods on D-Vlog.}
+\label{tab:sota}
+\footnotesize
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule[1.2pt]
+Method & Acc & Prec & Rec & F1 & AUC \\
+\midrule[0.8pt]
+TAMFN~\cite{zhou2023tamfn} & 0.670 & 0.679 & 0.827 & 0.750 & -- \\
+DepMSTAT~\cite{tao2024depmstat} & -- & 0.715 & 0.756 & 0.735 & -- \\
+ASYM~\cite{hua2026asym} & 0.709 & 0.710 & 0.846 & 0.771 & 0.781 \\
+\midrule[0.8pt]
+\textbf{AFGNN (3-seed ensemble)} & \textbf{0.764} & \textbf{0.766} & \textbf{0.854} & \textbf{0.8077} & \textbf{0.8041} \\
+\bottomrule[1.2pt]
+\end{tabular}%
+}
+\end{table}
+
+\subsection{Ablation Study}
+
+\subsubsection{Graph structure}
+
+Table~\ref{tab:graph_ablation} compares different face graph constructions, keeping the audio branch and fusion fixed.
+The simplest static + temporal graph with region one-hot and self-loops works best.
+Adding dynamic edges based on feature similarity or motion consistently degrades performance, suggesting overfitting on the small training set.
+
+\begin{table}[t]
+\centering
+\caption{Ablation on face graph structure. ``Static'' and ``Temp'' denote anatomical and temporal edges; ``Dyn'' denotes dynamic edges; ``Region'' adds a facial-region one-hot and self-loops.}
+\label{tab:graph_ablation}
+\footnotesize
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule[1.2pt]
+Face graph & Acc & Prec & Rec & F1 \\
+\midrule[0.8pt]
+Static + Temporal & 0.717 & 0.720 & 0.837 & 0.774 \\
+Static + Temporal + Region + Self-loop & \textbf{0.717} & \textbf{0.698} & \textbf{0.902} & \textbf{0.787} \\
+Static + Temporal + Dynamic ($k$=1) & 0.623 & 0.637 & 0.813 & 0.714 \\
+Motion + Region ($k$=2) & 0.571 & 0.584 & 0.902 & 0.709 \\
+\bottomrule[1.2pt]
+\end{tabular}%
+}
+\end{table}
+
+\subsubsection{Modality and fusion}
+
+Table~\ref{tab:fusion_ablation} shows the contribution of each modality and fusion strategy.
+Audio alone already outperforms face alone, but the two modalities together achieve the best result.
+Cross-attention fusion improves over simple concatenation.
+
+\begin{table}[t]
+\centering
+\caption{Ablation on modalities and fusion.}
+\label{tab:fusion_ablation}
+\footnotesize
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule[1.2pt]
+Configuration & Acc & Prec & Rec & F1 & AUC \\
+\midrule[0.8pt]
+Face only & 0.580 & 0.580 & 1.000 & 0.734 & 0.657 \\
+Audio only & 0.618 & 0.609 & 0.951 & 0.743 & 0.722 \\
+Face + Audio (concat) & 0.717 & 0.741 & 0.789 & 0.764 & 0.794 \\
+Face + Audio (cross-attn) & 0.717 & 0.698 & 0.902 & 0.787 & 0.793 \\
+\bottomrule[1.2pt]
+\end{tabular}%
+}
+\end{table}
+
+\subsubsection{Audio length, loss, and ensemble}
+
+Table~\ref{tab:other_ablation} reports additional design choices, evaluated on the full face+audio cross-attention configuration unless otherwise stated.
+Increasing audio frames from 16 to 32 improves both F1 and AUC; 64 frames hurts performance, likely because longer clips dilute the most discriminative acoustic segments.
+For the face branch with region one-hot and self-loops, focal loss ($\alpha=0.25$, $\gamma=2$) achieves comparable F1 to weighted BCE while producing a more balanced precision--recall trade-off.
+Finally, the 3-seed ensemble yields the best F1 with a competitive AUC; a 5-seed ensemble gives a marginally higher AUC but lower F1, indicating that adding too many models dilutes the precision--recall balance.
+
+\begin{table}[t]
+\centering
+\caption{Ablation on audio length, loss function, and seed ensemble.}
+\label{tab:other_ablation}
+\small
+\begin{tabular}{lcc}
+\toprule[1.2pt]
+Setting & F1 & AUC \\
+\midrule[0.8pt]
+Audio 16 frames & 0.767 & 0.754 \\
+Audio 32 frames & \textbf{0.787} & 0.793 \\
+Audio 64 frames & 0.762 & 0.760 \\
+\midrule[0.8pt]
+Weighted BCE & 0.782 & 0.808 \\
+Focal loss & \textbf{0.787} & 0.793 \\
+\midrule[0.8pt]
+Single seed 42 & 0.787 & 0.793 \\
+3-seed ensemble & \textbf{0.8077} & \textbf{0.8041} \\
+5-seed ensemble & 0.793 & 0.805 \\
+\bottomrule[1.2pt]
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figure4_ablation.pdf}
+\caption{Ablation study results. (a) Facial graph structure. (b) Modality and fusion strategy. (c) Audio clip length and loss function. (d) Seed-ensemble size. The best configuration in each subplot is highlighted in teal.}
+\label{fig:ablation}
+\end{figure}
+
+\subsection{Visualization and Interpretability}
+
+A key advantage of representing face and audio as graphs is improved interpretability.
+We inspect both the audio readout gate and the face-graph attention weights to verify that AFGNN bases its decisions on clinically meaningful cues.
+
+\textbf{Face graph.}
+Figure~\ref{fig:face_graph} illustrates the face graph construction: anatomical edges connect landmarks within each frame, while temporal edges link the same landmark across consecutive frames.
+The resulting topology explicitly preserves facial regions, such as the eyes and mouth, that are known to be related to depression-related expressiveness.
+When we aggregate GAT attention coefficients across all test samples and group them by facial region, the eye and mouth rings receive consistently higher weights than the face contour.
+This pattern suggests that the model prioritises expressive regions over identity-related shape information.
+
+\textbf{Audio graph.}
+Figure~\ref{fig:audio_graph} visualises the audio temporal graph.
+Each node corresponds to a frame-level acoustic descriptor, and bidirectional chain edges propagate prosodic dynamics.
+The readout gate in the Audio GNN learns a scalar weight for every time frame; frames with larger acoustic variation tend to receive higher weights, whereas flat, low-energy regions are down-weighted.
+This pattern is consistent with the clinical observation that depressed speech is often more monotonic.
+
+Together, these observations confirm that AFGNN offers both competitive performance and interpretable depression-related cues.
+
+\subsection{Discussion}
+
+\textbf{Why do dynamic edges hurt?}
+Dynamic edges adapt the topology to each sample, which is intuitively appealing.
+However, they introduce many extra edges and parameters.
+On D-Vlog ($\sim$600 training samples), this leads to overfitting: validation AUC increases while test F1 drops.
+Static-temporal graphs encode strong anatomical and temporal priors that generalize better.
+
+\textbf{Why AUC early stopping?}
+Maximizing F1 directly can encourage degenerate solutions (e.g., predicting all positives to boost recall).
+AUC measures ranking quality independent of threshold and therefore selects models with better discriminative power.
+The F1-optimal threshold is then chosen separately on the validation set.
+
+\textbf{Limitations.}
+Our study is limited to the D-Vlog dataset; generalization to clinical interviews or other cultures is future work.
+The small training set also makes the final predictions sensitive to model initialization; we address this through model ensembling.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented AFGNN, a multimodal graph neural network for depression detection from vlogs.
+By representing facial landmarks and acoustic features as graphs and fusing them with cross-modal attention, AFGNN achieves strong discriminative performance.
+Our systematic ablations reveal a practically important finding: for small-sample depression detection, simple static-temporal face graphs outperform adaptive dynamic graphs.
+Together with AUC-based early stopping, focal loss, and model ensembling, AFGNN obtains F1 = 0.8077 and AUC = 0.8041 on the official D-Vlog test split.
+Future work will explore larger datasets and interpretability of the learned attention weights.
+
+\bibliographystyle{IEEEtran}
+\bibliography{AFGNN}
+\end{document}

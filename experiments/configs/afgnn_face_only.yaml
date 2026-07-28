@@ -1,0 +1,82 @@
+# AFGNN Face-only configuration for first-stage validation
+# Updated for training stability: class-weighted loss, LayerNorm, AttentionalAggregation,
+# gradient clipping, and LR scheduler.
+
+# Data paths
+data:
+  processed_dir: /data/ltq/DVlog/processed_official_features
+  num_frames: 16       # T_v: number of uniformly sampled frames for face graph
+  audio_num_frames: 32 # T_a: number of uniformly sampled frames for audio graph
+
+# Model architecture
+model:
+  use_face: true
+  use_audio: true
+
+  # Fusion: "concat" | "cross_attention"
+  fusion_type: "cross_attention"
+  fusion_hidden_dim: 64
+
+  # Face branch
+  face_in_channels: 4      # [x, y, dx, dy]
+  face_hidden_channels: 128
+  face_out_channels: 128
+  face_num_layers: 3
+  face_heads: 4
+
+  # Audio branch
+  audio_in_channels: 25
+  audio_hidden_channels: 64
+  audio_out_channels: 64
+  audio_num_layers: 2
+  audio_heads: 4
+
+  # Classification head
+  mlp_hidden: 128
+  dropout: 0.3             # reduced from 0.5 for small dataset stability
+
+  # Face graph structure (best face-only: static + temporal only)
+  add_static_edges: true
+  add_temporal_edges: true
+  add_dynamic_edges: false
+  dynamic_k: 2
+  dynamic_metric: "cosine"
+  dynamic_edge_weight: 1.0
+  dynamic_feature: "motion"
+  dynamic_region_restricted: true
+
+  # Edge type embedding
+  use_edge_type: false
+  num_edge_types: null
+  edge_emb_dim: 4
+
+# Training hyperparameters
+training:
+  batch_size: 32
+  num_workers: 4
+  epochs: 100
+  patience: 15
+  lr: 0.001
+  weight_decay: 0.0001
+  checkpoint_path: experiments/checkpoints/afgnn_face_only_best.pt
+
+  # Early stopping metric.
+  # Options: "f1" | "auc" | "accuracy" | "loss"
+  # Recommended for imbalanced depression detection: "auc"
+  early_stopping_metric: "auc"
+
+  # Loss options: "bce" | "weighted_bce" | "focal"
+  loss: "weighted_bce"
+
+  # Focal loss hyperparameters (only used when loss == "focal")
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+
+  # Learning rate scheduler (optional)
+  scheduler:
+    type: "plateau"
+    factor: 0.5
+    patience: 5
+
+  # Gradient clipping max norm (set to null to disable)
+  grad_clip: 1.0

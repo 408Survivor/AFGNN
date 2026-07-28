@@ -1,0 +1,69 @@
+# Focal Loss + AdamW + Cosine Annealing variant
+# Same architecture as the best focal model, different optimizer/scheduler.
+
+data:
+  processed_dir: /data/ltq/DVlog/processed_official_features
+  num_frames: 32
+  audio_num_frames: 32
+
+model:
+  use_face: true
+  use_audio: true
+  fusion_type: "cross_attention"
+  fusion_hidden_dim: 64
+
+  face_in_channels: 13
+  face_hidden_channels: 128
+  face_out_channels: 128
+  face_num_layers: 3
+  face_heads: 4
+
+  audio_in_channels: 25
+  audio_hidden_channels: 64
+  audio_out_channels: 64
+  audio_num_layers: 2
+  audio_heads: 4
+
+  mlp_hidden: 128
+  dropout: 0.3
+
+  add_static_edges: true
+  add_temporal_edges: true
+  add_dynamic_edges: false
+  dynamic_k: 2
+  dynamic_metric: "cosine"
+  dynamic_edge_weight: 1.0
+  dynamic_feature: "motion"
+  dynamic_region_restricted: true
+
+  add_region_onehot: true
+  add_self_loops: true
+
+  use_edge_type: false
+  num_edge_types: null
+  edge_emb_dim: 4
+
+augmentation:
+  enabled: false
+
+training:
+  batch_size: 32
+  num_workers: 4
+  epochs: 100
+  patience: 15
+  lr: 0.001
+  weight_decay: 0.001       # AdamW typically benefits from slightly higher weight decay
+  checkpoint_path: experiments/checkpoints/afgnn_face_enhanced_focal_adamw_cosine_best.pt
+
+  optimizer: "adamw"
+  early_stopping_metric: "auc"
+  loss: "focal"
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+
+  scheduler:
+    type: "cosine"
+    T_max: 100              # total epochs for cosine annealing
+    eta_min: 0.000001       # minimum learning rate
+
+  grad_clip: 1.0

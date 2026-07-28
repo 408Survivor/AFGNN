@@ -1,0 +1,635 @@
+%% 
+%% Copyright 2019-2024 Elsevier Ltd
+%% 
+%% This file is part of the 'CAS Bundle'.
+%% --------------------------------------
+%% 
+%% It may be distributed under the conditions of the LaTeX Project Public
+%% License, either version 1.3c of this license or (at your option) any
+%% later version.  The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% and version 1.3c or later is part of all distributions of LaTeX
+%% version 1999/12/01 or later.
+%% 
+%% The list of all files belonging to the 'CAS Bundle' is
+%% given in the file `manifest.txt'.
+%% 
+%% Template article for cas-dc documentclass for 
+%% double column output.
+
+\documentclass[a4paper,fleqn]{cas-dc}
+
+% If the frontmatter runs over more than one page
+% use the longmktitle option.
+
+%\documentclass[a4paper,fleqn,longmktitle]{cas-dc}
+
+%\usepackage[numbers]{natbib}
+%\usepackage[authoryear]{natbib}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+%\usepackage[table]{xcolor}
+%\usepackage{caption}
+%\usepackage{float} 
+
+%%%Author macros
+\def\tsc#1{\csdef{#1}{\textsc{\lowercase{#1}}\xspace}}
+\tsc{WGM}
+\tsc{QE}
+%%%
+
+% Uncomment and use as if needed
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newdefinition{rmk}{Remark}
+%\newproof{pf}{Proof}
+%\newproof{pot}{Proof of Theorem \ref{thm}}
+
+\usepackage{float}
+\usepackage{tikz} % 提供 tikzpicture 环境，用于绘制图形
+\usetikzlibrary{calc}
+\usepackage{xcolor} % 提供颜色定义功能，tikz 会自动加载它，但显式声明更安全
+\definecolor{jetblue}{RGB}{0, 0, 136}
+\definecolor{jetcyan}{RGB}{0, 255, 255}
+\definecolor{jetyellow}{RGB}{255, 255, 0}
+\definecolor{jetred}{RGB}{255, 0, 0}
+
+\begin{document}
+\let\WriteBookmarks\relax
+\def\floatpagepagefraction{1}
+\def\textpagefraction{.001}
+
+\shorttitle{}    
+
+\shortauthors{}  
+
+ \title[mode=title]{ViDA-GCAM:  Cross-Modal Fusion of Visual, Acoustic, and Facial Action Features for Depression Recognition from Social Media Vlogs}
+
+\author[1]{Tongqing Liu}
+\credit{Writing – review \& editing, Writing – original draft, Visualization, Software, Methodology, Data curation, Conceptualization}
+\author[1]{Xuanting Huang}
+\credit{Visualization}
+\author[2]{Lihong Qiao}
+\credit{Methodology, Conceptualization}
+\author[3]{Tong Zhao}
+\credit{Conceptualization, Funding acquisition}
+
+\author[1]{Baobin Li}
+\cormark[1]
+\ead{libb@ucas.ac.cn}
+\credit{Writing – review \& editing, Writing – original draft, Supervision, Conceptualization, Funding acquisition}
+\affiliation[1]{
+    organization={School of Computer Science and Technology},
+    addressline={University of Chinese Academy of Sciences},
+    city={Beijing},
+    %postcode={100049},
+    country={China}
+}
+
+\affiliation[2]{organization={College of Computer Science and Technology},
+               addressline={Chongqing University of Posts and Telecommunications},
+                city={Chongqing},
+                country={China}}
+
+\affiliation[3]{organization={School of Mathematical Sciences}, addressline={University of Chinese Academy of Sciences},city={Beijing},
+%postcode={100049},
+country={China}
+}
+\cortext[1]{
+Corresponding author.
+}
+
+
+\begin{abstract}
+Depression recognition is important for early intervention, while many existing studies still rely on laboratory-controlled or semi-controlled data, which limits their practical applicability in real-world scenarios. To address this problem, this paper proposes ViDA-GCAM, an adaptive cross-modal fusion framework for depression recognition from social media vlogs. The proposed framework extracts spatio-temporal visual features, temporal-frequency acoustic features, and complementary facial-action–acoustic features from facial images, audio signals, and facial action units. A Gated Cross-Attention Mapping module then adaptively fuses these heterogeneous representations through bidirectional attention and reliability-aware gating, with reconstruction-based autoencoder regularization used to preserve source-modality information and reduce overfitting. Experiments on the D-Vlog dataset of 831 YouTube vlogs show that ViDA-GCAM achieves 77.94\% precision and 78.23\% F1-score, outperforming existing vlog-based methods. 
+Cross-dataset evaluation on AVEC 2014 and explainability analysis further examine the generalization and explainability of the proposed framework.
+These results suggest that the proposed framework offers a practically applicable and effective approach to depression recognition in naturalistic vlog scenarios.
+\end{abstract}
+
+
+\begin{keywords}
+Depression Recognition\sep Social Media Vlogs\sep Cross-Modal Fusion\sep  Spatio-Temporal Features\sep Facial Action Units
+\end{keywords}
+
+\maketitle
+
+\section{Introduction}
+Depression is a prevalent mental disorder that affects emotional well-being, physical health, interpersonal relationships, and occupational functioning. According to the World Health Organization\cite{WHO}, more than 280 million people worldwide suffer from depression, and severe depression may lead to suicide. Early diagnosis and timely intervention are therefore important for reducing clinical risk. However, many individuals still fail to receive adequate assessment and treatment because of public stigma, limited access to mental health services, and the shortage of professional clinicians\cite{causes}. Conventional diagnostic approaches, such as clinical interviews and self-report questionnaires, also depend heavily on clinician experience and patient self-disclosure, which may introduce subjectivity, recall bias, and delays in diagnosis. These limitations highlight the need for accessible, objective, and non-invasive methods for depression recognition.
+
+Audio-visual behavioral signals provide a promising basis for non-invasive depression recognition because they can be collected more conveniently than physiological biomarkers, such as electroencephalography and heart-rate signals\cite{EEG,heart_rate_1,heart_rate_2}.
+Previous studies have shown that speech characteristics and facial behavioral descriptors are informative for depression and psychological disorder analysis\cite{auditory:signal,visual:signal}. Depression-related behavioral changes may be reflected in vocal rhythm, prosody, facial appearance, and facial movement dynamics, making audio-visual data suitable for accessible and scalable depression recognition. Compared with physiological measurements, audio and video data are also more compatible with online and daily-life recording scenarios, which makes them valuable for practical mental health screening.
+
+Existing studies on depression recognition have focused on audio, visual, and multimodal behavioral features. Audio-based methods have explored acoustic descriptors and neural speech representations to capture depression-related vocal changes\cite{research:audio_1,research:audio_2,research:audio_3,research:audio_4}, while video-based studies have investigated facial appearance, expression dynamics, and spatio-temporal behavioral patterns\cite{research:visual_1,research:visual_2,research:visual_3, research:visual_4}. More recent multimodal approaches integrate speech and facial information to exploit their complementary characteristics\cite{research:video_1,research:video_2,research:video_3,research:video_4,research:video_5}. These studies demonstrate the potential of  audio-visual depression recognition. However, many existing methods are developed on laboratory-controlled or semi-controlled benchmark datasets, such as AVEC, DAIC-WOZ, and E-DAIC\cite{dataset:AVEC2013,dataset:AVEC2014,dataset:DAIC,dataset:ExtendDAIC}, where recording conditions and participant behaviors are relatively constrained. As a result, their practical applicability to naturalistic and unconstrained recording scenarios remains limited.
+
+In contrast to laboratory-controlled datasets, social media vlogs provide a more naturalistic source for depression recognition. Vlog videos usually contain spontaneous facial expressions, natural speech behaviors, and diverse variations in lighting, scenes, and recording conditions, making them more suitable for capturing depression-related features in unconstrained online environments. The D-Vlog dataset has further promoted this research direction by providing real-world YouTube vlog data for multimodal depression detection\cite{dataset:dvlog}. Based on this dataset, several vlog-based methods have been developed to explore depression recognition from social media videos
+\cite{model:TFN, model:TAMFN, model:CAIINET, model:STST, model:MDAVIF}. 
+These studies have advanced depression recognition beyond controlled settings, but vlog-based recognition still faces substantial challenges caused by heterogeneous behavioral patterns and variable recording quality.
+
+However, depression recognition from social media vlogs remains challenging due to heterogeneous behavioral representations, variable modality quality, and unconstrained recording conditions.
+For visual information, facial appearance and temporal facial dynamics need to be jointly modeled under pose variations, occlusions, and lighting changes\cite{visual:challenge}. For acoustic information, the complementarity between temporal speech patterns and frequency-domain vocal characteristics has not been fully exploited\cite{audio:challenge}. In addition, facial action units provide fine-grained descriptions of facial muscle activities, but their coordination with acoustic behaviors remains underexplored in vlog-based depression recognition. Although existing vlog-based methods have explored different multimodal fusion strategies\cite{model:TFN, model:TAMFN, model:CAIINET, model:STST, model:MDAVIF,visual:challenge,audio:challenge,model:DepMamba,model:DepMPK,model:AttMamba}, many of them still rely on relatively fixed interaction mechanisms, making it difficult to adaptively handle modality reliability variations in unconstrained vlog scenarios.  Moreover, the generalization of such frameworks under cross-dataset distribution shifts and the explainability of recognition results remain insufficiently examined.
+
+To address these limitations, this paper proposes Visual, Dual-Audio, and Facial Action Fusion with Gated Cross-Attention Mapping (ViDA-GCAM), an adaptive cross-modal fusion framework for depression recognition from social media vlogs. ViDA-GCAM extracts spatio-temporal visual features, temporal-frequency acoustic features, and facial-action–acoustic complementary features to characterize depression-related behavioral patterns from multiple domains. These representations are integrated through a Gated Cross-Attention Mapping module, which adaptively regulates cross-modal information transfer using bidirectional attention and reliability-aware gating. Reconstruction-based autoencoder regularization is further introduced to preserve source-modality information and improve generalization.
+
+The main contributions of this paper are summarized as follows.
+
+(1) This study formulates depression recognition from social media vlogs as an unconstrained multimodal representation problem. Instead of relying on controlled interview-style recordings, ViDA-GCAM is designed to handle spontaneous facial behaviors, natural speech variations, and heterogeneous recording conditions in real-world vlog scenarios.
+
+(2) ViDA-GCAM provides an adaptive fusion solution for heterogeneous behavioral representations. It jointly learns spatio-temporal visual representations, temporal-frequency acoustic representations, and facial-action–acoustic complementary representations, and uses Gated Cross-Attention Mapping to regulate cross-modal information transfer through bidirectional attention and reliability-aware gating.
+
+(3) The proposed framework is evaluated through a multi-level experimental protocol. On the D-Vlog dataset, ViDA-GCAM achieves 77.94\% precision and 78.23\% F1-score, outperforming existing vlog-based methods under our implementation. Ablation studies examine the contribution of key components, while cross-dataset evaluation on AVEC 2014 and facial-region/AU-based explainability analyses further assess generalization and explainability under distribution shifts.
+
+
+\begin{figure*}[t!]
+\centering
+\includegraphics[width=\textwidth]{Figure1.pdf}
+\caption{Overall architecture of ViDA-GCAM. The workflow proceeds from (1) multimodal feature extraction, which learns spatio-temporal visual, temporal-frequency acoustic, and AU-audio complementary features, to (2) GCAM-based adaptive cross-modal fusion, which regulates information transfer between heterogeneous representations, and finally to (3) information-retention classification, which predicts depression labels while preserving source-modality information through visual and acoustic reconstruction during training.}
+\label{fig1:ViDA-GCAM Architecture}
+\end{figure*}
+
+\section{Related Work}
+Automatic depression recognition has evolved from unimodal behavioral analysis to multimodal representation learning and, more recently, to real-world depression detection using social media vlogs. Accordingly, this section reviews existing studies from four perspectives: audio-based depression recognition, video-based depression recognition, multimodal audio-visual depression recognition, and vlog-based depression recognition.
+
+
+
+\subsection{Audio-based Depression Recognition}
+Audio-based depression recognition aims to identify depression-related vocal patterns from speech signals. Early studies mainly relied on hand-crafted acoustic descriptors, such as Mel-frequency cepstral coefficients and low-level descriptors, which can be extracted using toolkits such as OpenSMILE~\cite{auditory:signal}. These features capture certain acoustic properties related to depression, but their representation capacity is limited when used alone, especially under real-world recording conditions.
+
+With the development of deep learning, researchers have explored neural representations learned from raw waveforms, Mel-filter banks, and other low-level acoustic inputs. DepAudioNet combines convolutional neural networks with long short-term memory networks for audio-based depression classification~\cite{research:audio_1}, while later studies integrate deep acoustic representations with hand-crafted features, aggregate short-term features into utterance-level representations, or incorporate speech emotion information to enhance vocal modeling~\cite{research:audio_2,research:audio_3,research:audio_4}. Recent works have further attempted to suppress speaker-specific information, model temporal and spectral information separately, or use pre-trained speech representations for depression detection~\cite{Pan2024MFDSVAN,Chen2025TTFNet,model:InterpSpeech}.
+
+Audio-based methods demonstrate that speech contains valuable information for depression recognition. However, speech signals in social media vlogs are often affected by background noise, variable speaking styles, and diverse recording conditions. Therefore, relying on a single acoustic representation may be insufficient, and explicit modeling of complementary temporal and frequency-domain information remains important for robust vlog-based depression recognition.
+
+\subsection{Video-based Depression Recognition}
+Video-based depression recognition aims to identify depression-related facial appearance and behavioral dynamics from visual signals. Early studies mainly treated facial videos as frame-level images and used convolutional neural networks to extract facial representations. Zhu et al.~\cite{research:visual_1} proposed a two-stream framework that combines facial appearance and optical flow, while Zhou et al. introduced DepressNet to learn multi-scale facial features with visual interpretability~\cite{research:visual_2}.
+
+Subsequent studies further improved visual representation learning by modeling facial regions, relationships, label uncertainty, and identity-invariant features. 
+De Melo et al.~\cite{Melo2019Distribution} formulated depression detection as a distribution learning problem, 
+Liu et al.~\cite{Liu2023PRANet} modeled relationships among facial parts, and Pan et al. \cite{Pan2024OpticalDR} attempted to remove identity information while preserving depression-related visual characteristics. Since depression is also associated with reduced expressiveness and altered facial movement patterns, later studies incorporated explicit temporal or spatio-temporal modeling, including 3D convolutional networks, recurrent networks, multi-scale temporal architectures, and attention mechanisms~\cite{Jazaery2018C3D,Melo2019GlobalLocalC3D,Azher2020BiLSTM,Melo2020Multiscale,He2021STFAM,Melo2021MDN,Niu2022SETOV,Li2025MemRank}.
+
+These studies confirm the value of facial information for depression recognition. However,  visual modeling remains difficult in unconstrained vlog scenarios, where facial expressions may be subtle and visual signals are affected by pose changes, occlusions, lighting variations, and other uncontrolled factors. Therefore, an effective visual branch should jointly capture spatial facial appearance and temporal facial dynamics for real-world vlog-based depression recognition.
+
+\subsection{Audio-Visual Fusion Depression Recognition}
+To exploit the complementary nature of speech and facial behavior, multimodal audio-visual depression recognition has become an important direction in recent research.
+Since audio and visual modalities can capture different useful information, multimodal fusion has become a widely used approach for depression recognition. Yang~\textit{et al.} proposed one of the earliest deep multimodal frameworks by combining audio, visual, and textual information~\cite{research:video_1}. Jan~\textit{et al.} integrated traditional acoustic features with deep visual representations and introduced temporal modeling for depression analysis~\cite{research:video_2}. Fan~\textit{et al.} developed a dilated CNN to model long-range dependencies in multimodal sequences~\cite{research:video_3}.
+
+More studies have increasingly focused on effective multimodal fusion strategies. 
+Niu~\textit{et al.}  proposed attention mechanisms to combine audio and visual features at different levels~\cite{research:audio_3}. Rasipuram~\textit{et al.} explored Transformer-based embeddings for multimodal depression detection~\cite{Rasipuram2022TaskTransformer}. Hu~\textit{et al.} presented a parallel multiscale fusion network to capture dynamics across different temporal scales~\cite{Hu2023PMBFN}. Fan~\textit{et al.} extended multimodal depression recognition by incorporating remote photoplethysmograph signals in addition to audio and video~\cite{Fan2024TMFEGFN}. Zhou~\textit{et al.} improved robustness under noisy conditions through channel attention and residual Swin Transformer modules~\cite{research:video_5}. These methods collectively demonstrate the value of multimodal representation learning for improving recognition performance.
+
+
+These methods show that integrating acoustic and visual information can improve depression recognition. However, many fusion strategies still mainly focus on feature aggregation or attention-based interaction, while the reliability and contribution of each modality may vary across samples, especially in unconstrained vlog scenarios. This indicates the need for a more adaptive cross-modal fusion mechanism that can regulate information transfer between heterogeneous representations.
+
+
+\subsection{Vlog-based Depression Recognition}
+Compared with laboratory-controlled interview datasets, social media vlogs provide a more naturalistic setting for depression recognition. Vlog videos contain spontaneous facial expressions, natural speech behaviors, and diverse variations in lighting, scenes, and recording conditions, making them closer to real-world social contexts. Yoon~\textit{et al.} introduced the D-Vlog dataset, the first large-scale multimodal vlog dataset for depression detection, which has promoted research on depression recognition from social media videos~\cite{dataset:dvlog}.
+
+Based on D-Vlog, several methods have been developed for vlog-based depression recognition. TFN~\cite{model:TFN} models interactions among different modalities through tensor fusion, while TAMFN~\cite{model:TAMFN} incorporates temporal-aware attention to enhance cross-modal representation learning. CAIINET~\cite{model:CAIINET} introduces contextual attention and information interaction mechanisms, and STST~\cite{model:STST} combines spatio-temporal representations across modalities. MDAVIF~\cite{model:MDAVIF} further explores multi-domain acoustic-visual fusion with adaptive feature interaction and autoencoding regularization, showing the effectiveness of multi-domain fusion for vlog-based depression recognition.
+
+More recent studies have investigated efficient sequence modeling and adaptive multimodal fusion in vlog scenarios. Ye~\textit{et al.} combine CNN and Mamba blocks for hierarchical contextual modeling and progressive multimodal fusion~\cite{model:DepMamba}. 
+Yang~\textit{et al.}~\cite{model:DepMPK}
+incorporate clinical knowledge priors into multimodal fusion, while Zhou~\textit{et al.} use cross-modal interaction and adaptive attention to model inter-modal dependencies~\cite{model:CAFMamba}. Zheng~\textit{et al.} combine bidirectional Mamba with attention mechanisms and sparse graph-based fusion for long-sequence modeling~\cite{model:AttMamba}. These studies indicate that vlog-based depression recognition is moving toward more efficient sequence modeling and more flexible fusion strategies.
+
+
+Despite these advances, existing vlog-based depression recognition methods still leave several important issues insufficiently addressed. First, most studies focus primarily on visual-acoustic fusion, while the complementary relationship among facial images, acoustic signals, and facial action units has not been fully exploited. Second, spatial, temporal, and frequency-domain information is often processed separately or integrated through relatively fixed fusion strategies, making it difficult to adapt cross-modal interaction to modality reliability variations in unconstrained vlog scenarios. Third, the generalization of vlog-based recognition frameworks under cross-dataset distribution shifts remains underexplored. Finally, although recent methods have improved recognition performance, the facial regions and facial action patterns that support recognition results are still not sufficiently examined. These limitations motivate the development of an adaptive cross-modal fusion framework that jointly integrates visual, acoustic, and facial action features while considering generalization and explainability.
+
+\section{Method}
+The overall architecture of ViDA-GCAM is shown in Fig. 1. Given facial image sequences, audio signals, and corresponding facial action unit sequences, the framework first encodes them into three representations: spatio-temporal visual representation, temporal-frequency acoustic representation, and complementary facial-action–acoustic representation. These representations are then fused by the gated cross-attention mapping (GCAM) module, and the resulting multimodal representation is used for depression classification. Reconstruction-based autoencoder regularization is incorporated during training to preserve source-modality information and reduce overfitting.
+
+
+
+Formally, the depression probability $\hat{y}$ is predicted from the concatenation of two GCAM-enhanced representations,
+\begin{equation}
+\hat{y}=\mathcal{H}\left(
+\left[
+F_{VC}
+\Vert
+F_{AC}
+\right]
+\right),
+\end{equation}
+where  $F_{VC} = \mathcal{G}(X_V, X_C)$, $F_{AC} = \mathcal{G}(X_A, X_C)$, $[\cdot \Vert \cdot]$, $\mathcal{H}(\cdot)$ and $\mathcal{G}(\cdot)$ denote the feature concatenation, classification head and  GCAM module, respectively. The three input representations are obtained as $X_V = \mathcal{F}_V(I), ~
+X_A = \mathcal{F}_A(S), ~
+X_C = \mathcal{F}_C(U, S),$
+where $I$, $S$, and $U$ denote the aligned facial image sequence, audio segment, and facial action unit sequence, respectively. 
+$\mathcal{F}_V(\cdot)$, $\mathcal{F}_A(\cdot)$, and $\mathcal{F}_C(\cdot)$ denote the visual encoder, acoustic encoder, and facial-action--acoustic complementary encoder.  
+
+\subsection{Multi-Domain Representation Learning}
+Depression-related behavioral patterns in social media vlogs are reflected through multiple feature domains. Facial image sequences contain spatial facial appearance and temporal facial dynamics, audio signals contain temporal speech patterns and frequency-domain vocal characteristics, and facial action units provide fine-grained descriptions of facial muscle activities. To characterize these heterogeneous and complementary types of behavioral information, ViDA-GCAM performs multi-domain representation learning before cross-modal fusion.
+
+Specifically, the proposed framework learns three complementary representations: a spatio-temporal visual representation $X_V$, a temporal-frequency acoustic representation $X_A$, and a complementary facial-action–acoustic representation $X_C$. These representations can be regarded as projections into three latent spaces:
+\begin{equation}
+X_V \in \mathcal{Z}_{st}, \quad
+X_A \in \mathcal{Z}_{tf}, \quad
+X_C \in \mathcal{Z}_{ca},
+\end{equation}
+where $\mathcal{Z}_{st}$,  $\mathcal{Z}_{tf}$ and $\mathcal{Z}_{ca}$ denote the spatio-temporal visual, temporal-frequency acoustic latent space, and complementary facial-action–acoustic latent space, respectively.
+
+
+
+\subsubsection{Spatio-Temporal Visual Encoder}
+Given the aligned facial image sequence $I=\{I_t\}_{t=1}^{T}$, where $T=16$, the visual encoder aims to extract a compact spatio-temporal representation $X_V=\mathcal{F}_V(I)\in\mathbb{R}^{1\times 768}$. Specifically, a 2D-CNN is first used to encode frame-level spatial information, and the extracted frame features are then fed into a Vision Transformer to capture temporal dependencies among facial frames. In this way, the visual encoder jointly captures local facial appearance and temporal facial dynamics, providing spatio-temporal visual information for vlog-based depression recognition.
+
+
+
+\subsubsection{Temporal-Frequency Audio Encoder}
+The audio branch adopts a dual-path design to explicitly explore complementary acoustic information from both temporal and frequency domains. Given an audio segment $S$, the temporal-domain encoder $\phi_T(\cdot)$ characterizes speech variations along the time axis, while the frequency-domain encoder $\phi_F(\cdot)$ extracts spectral characteristics from the short-time Fourier transform representation of $S$:
+\begin{equation}
+X_A^T = \phi_T(S), \quad X_A^F = \phi_F(\mathrm{STFT}(S)).
+\end{equation}
+
+The two acoustic representations are concatenated and projected into a unified latent space:
+\begin{equation}
+X_A = W_A [X_A^T \Vert X_A^F] + b_A,
+\end{equation}
+where $W_A$ and $b_A$ are learnable parameters, $[\cdot \Vert \cdot]$ denotes feature concatenation, and the final representation satisfies $X_A \in \mathbb{R}^{1\times 768}$. By explicitly combining temporal speech dynamics and frequency-domain vocal characteristics, this branch provides a temporal-frequency acoustic representation for subsequent cross-modal fusion.
+
+
+\subsubsection{AU--Acoustic Complementary Encoder}
+To characterize the coordination between facial muscle activities and vocal behaviors, a facial-action--acoustic complementary branch is introduced to learn $X_C=\mathcal{F}_C(U,S)\in\mathbb{R}^{1\times 1248}$. In this branch, the facial action unit sequence $U$ and the corresponding audio segment $S$ are first encoded by bidirectional LSTMs to capture temporal dependencies. The encoded AU and audio features are then integrated through an interleaved weaving operation and further refined by Transformer encoder layers with temporal and modal encodings. The resulting representation captures complementary facial-action–acoustic information for subsequent cross-modal fusion.
+
+
+\subsection{Adaptive Cross-Modal Fusion via GCAM}
+
+After multi-domain representation learning, the extracted representations contain heterogeneous information from different modalities and feature domains. Direct concatenation or fixed fusion may be insufficient in unconstrained vlog scenarios, because the contribution of each modality can vary across samples. For example, facial information may be affected by pose variations or occlusions, while acoustic information may be disturbed by background noise or recording quality. Therefore, the fusion module should not only exploit complementary cross-modal information, but also adaptively regulate information transfer between heterogeneous representations.
+
+
+Accordingly, we introduce GCAM for adaptive cross-modal fusion, as illustrated in Fig.~\ref{fig1:ViDA-GCAM Architecture}. In the proposed framework, GCAM is applied to two representation pairs, $(X_V, X_C)$ and $(X_A, X_C)$, producing the fused representations $F_{VC}$ and $F_{AC}$, respectively. Formally, GCAM is defined as
+\begin{equation}
+\mathcal{G}: \mathcal{Z}_i \times \mathcal{Z}_{ca} \rightarrow \mathcal{Z}_f,
+\end{equation}
+where $\mathcal{Z}_i \in \{\mathcal{Z}_{st}, \mathcal{Z}_{tf}\}$ denotes the input latent space to be fused with $\mathcal{Z}_{ca}$, and $\mathcal{Z}_f$ denotes the fused latent space.
+
+For a generic input pair $(X_1, X_2)$, where $X_1 \in \mathbb{R}^{1\times m}$ and $X_2 \in \mathbb{R}^{1\times n}$, GCAM first projects the two representations into the same latent dimension $d$:
+\begin{equation}
+X_k^{(0)} = \mathrm{Linear}(X_k), \quad k \in \{1,2\}.
+\end{equation}
+This projection enables heterogeneous representations with different original dimensions to be processed in a shared fusion space.
+
+At the $l$-th fusion layer, self-attention is first applied to each projected representation to enhance intra-modal feature interactions:
+\begin{equation}
+\mathrm{MSA}(Q,K,V)=
+\mathrm{softmax}
+\left(
+\frac{QK^{\top}}{\sqrt{d}}
+\right)V,
+\end{equation}
+where $\mathrm{MSA}(\cdot)$ denotes multi-head self-attention. The self-attention-enhanced representation is then obtained as
+\begin{equation}
+S_k^{(l)}=
+\mathrm{MSA}
+\left(
+Q_k^{(l)},K_k^{(l)},V_k^{(l)}
+\right),
+\quad k\in\{1,2\}.
+\end{equation}
+
+After intra-modal refinement, bidirectional cross-modal attention is used to exchange complementary information between the two representations. Specifically, each representation serves as the query to attend to the other representation:
+\begin{equation}
+\mathrm{Attn}_1^{(l)}
+=
+\mathrm{MCA}
+\left(
+Q_{S_1}^{(l)},
+K_{S_2}^{(l)},
+V_{S_2}^{(l)}
+\right),
+\end{equation}
+\vspace{-2em}
+\begin{equation}
+\mathrm{Attn}_2^{(l)}
+=
+\mathrm{MCA}
+\left(
+Q_{S_2}^{(l)},
+K_{S_1}^{(l)},
+V_{S_1}^{(l)}
+\right),
+\end{equation}
+where $\mathrm{MCA}(\cdot)$ denotes multi-head cross-attention. $\mathrm{Attn}_1^{(l)}$ represents the information transferred from the second representation to the first representation, while $\mathrm{Attn}_2^{(l)}$ represents the information transferred from the first representation to the second representation.
+
+To adaptively regulate the amount of transferred information, the two cross-attention outputs are separately passed through gating networks with sigmoid activation to generate direction-specific gate matrices,
+\begin{equation}
+    G_i^{(l)}=\sigma\left(
+\mathrm{MLP}_i\left(
+\mathrm{Concat}\left(X_i^{(l-1)}, \mathrm{Attn}_i^{(l)}\right)
+\right)
+\right), \quad i\in\{1,2\}.
+\end{equation}
+where $\sigma(\cdot)$ denotes the sigmoid activation function. Each gate controls the balance between the transferred cross-modal information and the previous-layer representation in the corresponding fusion direction,
+\begin{equation}
+H_1^{(l)}
+=
+G_1^{(l)} \odot \mathrm{Attn}_1^{(l)}
++
+\left(1-G_1^{(l)}\right)\odot X_1^{(l-1)},
+\end{equation}
+\vspace{-2em}
+\begin{equation}
+H_2^{(l)}
+=
+G_2^{(l)} \odot \mathrm{Attn}_2^{(l)}
++
+\left(1-G_2^{(l)}\right)\odot X_2^{(l-1)},
+\end{equation}
+where $\odot$ denotes element-wise multiplication. In this way, GCAM adaptively introduces cross-modal information while retaining the original modality-specific representation when necessary.
+
+To stabilize the multi-layer fusion process, cross-layer residual aggregation is further introduced
+\begin{equation}
+X_1^{(l)}
+=
+\mathrm{LayerNorm}
+\left(
+H_1^{(l)}+\alpha_l X_1^{(l-1)}
+\right),
+\end{equation}
+\vspace{-2em}
+\begin{equation}
+X_2^{(l)}
+=
+\mathrm{LayerNorm}
+\left(
+H_2^{(l)}+\alpha_l X_2^{(l-1)}
+\right),
+\alpha_l=\sqrt{\frac{l}{l+1}},
+\end{equation}
+where $\alpha_l$ is a layer-dependent residual coefficient. This residual aggregation helps preserve previous-layer information and improves the stability of stacked fusion layers.
+
+After $L$ fusion layers, the final fused representation is obtained by projecting the two updated representations into a unified fusion space
+\begin{equation}
+\mathcal{G}(X_1,X_2)
+=
+\mathrm{GELU}
+\left(
+\mathrm{Linear}
+\left(
+\mathrm{Concat}
+\left(
+X_1^{(L)},X_2^{(L)}
+\right)
+\right)
+\right).
+\end{equation}
+In our implementation, the number of GCAM layers is set to $L=3$, which provides sufficient fusion capacity while keeping the model complexity moderate.
+
+
+
+
+
+\subsection{Classification and Regularization}
+After adaptive cross-modal fusion, the two fused representations $F_{VC}$ and $F_{AC}$ are concatenated to form the final multimodal representation, $F = [F_{VC} \Vert F_{AC}].$
+The depression probability is then predicted by $\hat{y} = \sigma(\phi_{\mathrm{cls}}(F)),$
+where $\phi_{\mathrm{cls}}(\cdot)$ denotes the classification head and $\sigma(\cdot)$ denotes the sigmoid activation function. The classification loss is defined as
+\begin{equation}
+\mathcal{L}_{CE}
+=
+-\left[
+y\log\hat{y}
++
+(1-y)\log(1-\hat{y})
+\right],
+\end{equation}
+where $y\in\{0,1\}$ denotes the ground-truth label, with $y=1$ indicating a depressed sample and $y=0$ indicating a normal sample.
+
+In addition to classification supervision, reconstruction-based autoencoder regularization is imposed on the fused representations to preserve source-modality information. The purpose is to prevent the fused features from becoming overly task-specific and losing information about the original visual and acoustic inputs. Specifically, two deconvolution-based decoders are used to reconstruct the visual and acoustic inputs from the corresponding fused representations, $\hat{I}=D_V(F_{VC}), \quad \hat{S}=D_A(F_{AC}),$
+where $D_V(\cdot)$ and $D_A(\cdot)$ denote the visual and acoustic decoders, respectively. The reconstruction losses are defined as
+\begin{equation}
+\mathcal{L}_{MAE}^{V} = \|I-\hat{I}\|_1, 
+\quad
+\mathcal{L}_{MAE}^{A} = \|S-\hat{S}\|_1.
+\end{equation}
+
+The final training objective combines the classification loss and the two reconstruction losses:
+\begin{equation}
+\mathcal{L}
+=
+\mathcal{L}_{CE}
++
+\lambda_V \mathcal{L}_{MAE}^{V}
++
+\lambda_A \mathcal{L}_{MAE}^{A},
+\end{equation}
+where $\lambda_V$ and $\lambda_A$ are weighting coefficients for the visual and acoustic reconstruction losses, respectively. In our implementation, the coefficients are set to $\lambda_v = 0.3$ and $\lambda_a = 0.1$.
+
+
+\begin{table}[htbp]
+\centering
+\caption{Statistics of the D-Vlog dataset used in our experiments.}
+\label{tab:d_vlog_stats}
+\begin{tabular}{lccc}
+\toprule
+Type      & Train & Validation & Test \\
+\midrule
+Total     & 553   & 92         & 186 \\
+Male      & 191   & 34         & 56  \\
+Female    & 362   & 58         & 130 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\section{Experiments and Results}
+This section evaluates the proposed ViDA-GCAM framework through comprehensive experiments. We first describe the datasets, preprocessing procedures, implementation details, and evaluation metrics. Then, comparisons with existing methods and ablation studies are conducted on the D-Vlog dataset to evaluate the recognition performance and the contribution of each component. Cross-dataset transfer experiments are further performed to assess generalization of the proposed framework. Finally, feature-space visualization, facial-region analysis, and action-unit explainability analysis are provided to interpret the learned representations and recognition results.
+
+
+
+\subsection{Datasets and Implementation Details}
+The D-Vlog dataset\cite{dataset:dvlog} is used as the primary benchmark for evaluating vlog-based depression recognition. It was collected from YouTube using depression-related search keywords and contains real-world vlog videos recorded under unconstrained conditions. After downloading the original videos through the provided links, 831 valid videos are retained, including 451 depressed samples and 380 non-depressed samples. The dataset is divided according to predefined training, validation, and test sets, as shown in Table~\ref{tab:d_vlog_stats}. 
+To further evaluate cross-dataset generalization, AVEC 2014\cite{dataset:AVEC2014} is used as an additional transfer dataset. Different from D-Vlog, AVEC 2014 contains structured human-computer interaction recordings collected under controlled laboratory conditions. Since AVEC 2014 originally provides continuous depression severity scores, the scores are remapped into binary labels to maintain consistency with the D-Vlog depression recognition setting.
+
+For the main D-Vlog experiments and cross-dataset evaluation, video recordings are processed into a consistent multimodal input format. Each recording is first separated into visual and audio streams. Because the videos have inconsistent durations, the visual stream is down-sampled at one frame per second and divided into 12 fixed-length facial image sequences, each containing 16 frames. For each image sequence, a 16-second audio segment is extracted from the same starting time to ensure temporal alignment. The resulting multimodal segment consists of a facial image sequence, the corresponding audio segment, and facial action unit features. OpenFace 2.0\cite{preprocess:OpenFace} is then used to detect and align faces in each image sequence and to extract facial action unit features\cite{preprocess:OpenFace_AU}. This process produces aligned facial image sequences of size $16\times112\times112\times3$ and AU features of size $16\times709$. For the audio stream, normalized acoustic features with a size of $624\times256$ are obtained through pre-emphasis, framing, and windowing\cite{preprocess:audio}. 
+
+ViDA-GCAM is implemented in PyTorch 1.10.0 and trained on two NVIDIA RTX 3090 GPUs. The batch size is set to 16, and the maximum number of training epochs is set to 50. AdamW is used as the optimizer with an initial learning rate of $1\times10^{-5}$, and the learning rate is adjusted using a cosine annealing schedule during training. For evaluation, accuracy, precision, recall, and F1-score are used to measure recognition performance. 
+
+
+\begin{table}[htbp]
+\centering
+\caption{Performance comparison with representative methods on the D-Vlog dataset under our implementation (\%).}
+\label{tab:main_results}
+\begin{tabular}{lcccc}
+\hline
+Method & Acc. & Prec. & Rec. & F1 \\
+\hline
+LR & 70.75 & 75.21 & 73.98 & 74.59 \\
+SVM & 72.17 & 76.23 & 75.61 & 75.92 \\
+RF & 72.17 & 73.88 & 80.49 & 77.04 \\
+KNN-Fusion & 66.04 & 65.27 & 88.62 & 75.17 \\
+BLSTM & 67.92 & 70.99 & 75.61 & 73.23 \\
+TFN\cite{model:TFN} & 62.74 & 63.92 & 82.11 & 71.89 \\
+DepressionDetector\cite{dataset:dvlog} & 64.62 & 69.35 & 69.92 & 69.64 \\
+TAMFN\cite{model:TAMFN} & 61.79 & 64.79 & 74.80 & 69.43 \\
+CAIINET\cite{model:CAIINET} & 66.98 & 72.65 & 69.11 & 70.83 \\
+STST\cite{model:STST} & 68.69 & 70.83 & 75.89 & 73.28 \\
+MDAVIF\cite{model:MDAVIF} & 70.07 & 69.56 & 78.83 & 73.91 \\
+DepMamba\cite{model:DepMamba} & 69.81 & 69.28 & 86.18 & 76.81 \\
+CAF-Mamba\cite{model:CAFMamba} & 66.04 & 65.45 & 87.80 & 75.00 \\
+DepMPK\cite{model:DepMPK} & 62.74 & 62.65 & 89.16 & 73.52 \\
+AttMamba\cite{model:AttMamba} & 66.98 & 66.26 & 87.80 & 75.52 \\
+CALA-Net\cite{model:CALA-Net} & 61.79 & 60.94 & 95.12 & 74.29 \\
+\hline
+\textbf{ViDA-GCAM} & \textbf{76.29} & \textbf{77.94} & 78.51 & \textbf{78.23} \\
+\hline
+\end{tabular}
+\end{table}
+
+
+
+
+\subsection{Main Results on D-Vlog}
+The main experiment is designed to evaluate whether ViDA-GCAM can improve vlog-based depression recognition compared with existing visual, acoustic, multimodal, and vlog-oriented methods.
+Table~\ref{tab:main_results} reports the performance comparison between ViDA-GCAM and representative baseline methods on the D-Vlog dataset. The compared methods include traditional machine learning classifiers, recurrent and tensor-based deep models, multimodal audio-visual fusion methods, and recent vlog-based depression recognition models. All baseline results are reproduced under our implementation using the same data setting whenever possible. For methods without fully available implementation details, the reproduced results may differ from those reported in the original papers.
+
+As shown in Table~\ref{tab:main_results}, traditional machine learning methods achieve moderate but limited performance, suggesting that shallow representations are insufficient for capturing complex depression-related behavioral patterns in social media vlogs. Deep learning and multimodal fusion methods generally improve recognition performance by learning temporal dependencies and cross-modal interactions. However, several existing methods still show an imbalance between precision and recall, indicating that their learned representations or fusion strategies may be sensitive to modality variations in unconstrained vlog videos.
+
+
+
+ViDA-GCAM achieves the strongest overall performance under our implementation, with 76.29\% accuracy, 77.94\% precision, 78.51\% recall, and 78.23\% F1-score. Compared with traditional machine learning methods, early deep models, and conventional multimodal fusion methods, ViDA-GCAM shows consistent improvements across accuracy, precision, and F1-score. Among closely related vlog-based methods, ViDA-GCAM improves the F1-score by 9.77 points over STST and 8.48 points over MDAVIF,
+% it improves the F1-score by 9.77 percentage points over STST and 8.48 percentage points over MDAVIF, 
+indicating the benefit of adaptive cross-modal fusion over conventional spatio-temporal or multi-domain feature interaction. Compared with recent methods such as DepMamba, CAF-Mamba, DepMPK, AttMamba, and CALA-Net, it achieves higher F1-score and substantially higher precision, suggesting a more balanced classification behavior. These results demonstrate the effectiveness of adaptively fusing spatio-temporal visual, temporal-frequency acoustic, and complementary facial-action–acoustic representations through GCAM.
+
+
+\begin{table}[htbp]
+\centering
+\caption{Ablation results on the D-Vlog dataset.}
+\label{tab:Ablation Study}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Ablated Element} & \textbf{Precision} & \textbf{$\Delta P$} & \textbf{F1-Score} & \textbf{$\Delta F1$}\\
+\hline
+ViT Encoder             & 73.26             & -4.68     & 73.19             & -5.06\\
+AU-Audio Weaving        & 72.10             & -5.84     & 72.46             & -5.79\\
+Audio Temporal Branch   & 74.02             & -3.92     & 74.64             & -3.61\\
+Audio Spectral Branch   & 73.86             & -4.08     & 74.42             & -3.83\\
+\hline
+$X_V$ (None)            & 62.56             & -15.38    & 60.42             & -17.83\\
+$X_A$ (None)            & 68.96             & -8.98     & 66.01             & -12.24\\
+$X_C$ (None)            & 69.07             & -8.87     & 68.02             & -10.23\\
+All (Concat)            & 74.28             & -3.66     & 73.96             & -4.29\\
+All+AE (Concat)         & 74.87             & -3.07     & 74.32             & -3.93\\
+All (GCAM)              & 77.42             & -0.52     & 77.89             & -0.36\\
+\textbf{All+AE (GCAM)}  & \textbf{77.94}    & -         & \textbf{78.23}    & -\\
+\hline
+\end{tabular}
+
+\vspace{0.5em}
+\footnotesize
+\textit{Note: AE denotes reconstruction-based autoencoder regularization.}
+\end{table}
+
+
+\subsection{Ablation Study}
+To further examine the contribution of each component in ViDA-GCAM, we conduct systematic ablation experiments on the D-Vlog dataset, as shown in Table~\ref{tab:Ablation Study}. The ablation study evaluates three main aspects of the proposed framework, including key representation branches, modality-specific representations, and the effects of adaptive fusion and reconstruction-based autoencoder regularization.
+ The full version, denoted as All+AE (GCAM), achieves the best performance, indicating that the proposed multi-domain representation learning, gated cross-modal fusion, and reconstruction-based regularization jointly improve depression recognition. The following analysis further examines the contribution of each component.
+
+The ablation results show that each representation branch contributes meaningfully to the final performance. Removing the ViT encoder decreases the F1-score from 78.23\% to 73.19\%, showing the importance of learning long-range temporal dependencies from facial image sequences. Removing the AU-audio weaving operation leads to an even larger decrease, with the F1-score dropping to 72.46\%, indicating that fine-grained interaction between facial action units and acoustic signals is important for capturing complementary facial-action–acoustic patterns. Similarly, removing either the temporal or spectral audio branch reduces the F1-score by 3.61 and 3.83 points, respectively, supporting the complementarity between temporal speech dynamics and frequency-domain vocal characteristics. In addition, removing any of the three representations, namely $X_V$, $X_A$, or $X_C$, causes substantial performance degradation, demonstrating that visual, acoustic, and facial-action–acoustic information provide complementary features for vlog-based depression recognition.
+
+
+The comparison between different fusion and regularization settings further confirms the effectiveness of GCAM and reconstruction-based regularization. Replacing direct concatenation with the adaptive fusion module improves the F1-score from 73.96\% to 77.89\%, indicating more effective cross-modal interaction than simple feature aggregation. The reconstruction constraint also provides consistent but smaller gains under different fusion settings. These results suggest that adaptive fusion plays a central role in performance improvement, while this regularization term helps preserve source-modality information and enhances the discriminative quality of the fused representation.
+
+
+\begin{table}[t]
+\centering
+\caption{Fine-tuned cross-dataset transfer results from D-Vlog to AVEC 2014 (\%).}
+\label{tab:cross_dataset}
+\begin{tabular}{lcccc}
+\hline
+Model & Acc. & Prec. & Rec. & F1 \\
+\hline
+ViDA & 61.00 & 62.96 & 85.71 & \textbf{72.34} \\
+MDAVIF~\cite{model:MDAVIF} & 56.00 & 58.89 & \textbf{88.33} & 70.67 \\
+ViDA-GCAM & \textbf{67.00} & \textbf{74.55} & 68.33 & 71.30 \\
+\hline
+\end{tabular}
+
+\smallskip
+{\footnotesize
+\noindent Note: ViDA denotes the concatenation-based variant of ViDA-GCAM without the GCAM module.\par
+}
+\end{table}
+
+\subsection{Cross-Dataset Transfer Evaluation}
+To further examine whether the proposed framework can maintain its effectiveness under distribution shifts, we conduct a fine-tuned cross-dataset transfer experiment from D-Vlog to AVEC 2014. ViDA-GCAM is first trained on D-Vlog and then fine-tuned on AVEC 2014 before evaluation. This setting evaluates whether depression-related behavioral representations learned from unconstrained social media vlogs can be adapted to a laboratory-controlled depression recognition dataset. D-Vlog contains spontaneous facial expressions and natural speech behaviors in real-world vlog scenarios, whereas AVEC 2014 consists of structured human-computer interaction recordings under controlled conditions, making this transfer task a challenging test for cross-dataset generalization.
+
+
+Table~\ref{tab:cross_dataset} reports the fine-tuned transfer results. ViDA-GCAM achieves the highest accuracy and precision, reaching 67.00\% and 74.55\%, respectively. Compared with MDAVIF, ViDA-GCAM increases accuracy from 56.00\% to 67.00\%, precision from 58.89\% to 74.55\%, and F1-score from 70.67\% to 71.30\%.
+ Although the concatenation-based ViDA variant obtains a slightly higher F1-score, ViDA-GCAM achieves substantially higher precision, suggesting that the adaptive fusion module helps produce more conservative and reliable positive predictions when transferring from unconstrained vlog data to the controlled AVEC 2014 setting.
+
+These results indicate that ViDA-GCAM has competitive cross-dataset generalization under target-domain fine-tuning. The comparison between ViDA and ViDA-GCAM further shows that the fusion mechanism affects the precision–recall trade-off. Simple concatenation tends to favor recall, whereas the adaptive fusion module improves precision and accuracy by regulating cross-modal information transfer. This suggests that the proposed adaptive fusion mechanism is useful for maintaining discriminative cross-modal representations under distribution shifts, although further domain-adaptive fusion strategies are still needed to improve robustness across heterogeneous depression recognition datasets.
+
+\subsection{Facial and AU Explainability}
+To examine the explainability of ViDA-GCAM, we analyze the recognition results from both facial-region and facial action unit (AU) perspectives. CAM++ visualization is used to identify facial regions that contribute to depression recognition, while AU-based analysis further examines whether these highlighted regions correspond to meaningful facial muscle activities. In addition, a set of model-derived depression-discriminative AUs (DDAUs) is identified, and their temporal discriminative information is evaluated. These analyses provide visual and quantitative evidence for understanding the recognition behavior of ViDA-GCAM.
+
+
+
+
+
+Fig.~\ref{fig:interpretability} presents the integrated facial-region and AU-level explainability results. The CAM++ activation maps show that ViDA-GCAM mainly attends to facial regions around the brow, eyes, cheeks, mouth, lips, chin, and jaw. These high-activation regions are consistent with the anatomical locations of the identified DDAU-10 set, including AU01, AU04, AU06, AU07, AU10, AU14, AU15, AU17, AU25, and AU26. Specifically, brow-related activations correspond to AU01 and AU04, periocular and cheek regions correspond to AU06 and AU07, upper-lip and mouth-corner regions correspond to AU10, AU14, and AU15, and lower-face regions correspond to AU17, AU25, and AU26. This correspondence suggests that ViDA-GCAM focuses on facial regions associated with facial action patterns related to depression recognition in vlog scenarios.
+
+The violin plots further compare the distributions of selected DDAUs between depressed and non-depressed samples. Although the intensity of a single AU may not be sufficient to distinguish depression independently, several DDAUs show observable group-level differences in activation distributions. This suggests that the identified AUs provide meaningful facial-action information for depression recognition, especially when considered jointly rather than independently. Therefore, the DDAU set should be interpreted as a compact group of model-derived facial action patterns that contribute to recognition results, rather than as isolated clinical indicators.
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=\textwidth]{Figure2.pdf}
+\caption{Explainability analysis of ViDA-GCAM. (a) CAM++ heatmaps highlighting depression-related facial regions on sample frames. (b) Anatomical localization of the DDAU-10 action-unit set on a reference face. (c) Representative DDAU-10 action units and their intensity distributions between depressed and normal samples. (d) Correspondence between CAM++ high-activation regions and DDAU-10 action units.
+}
+\label{fig:interpretability}
+\end{figure*}
+
+\begin{table}[t]
+\centering
+\caption{Temporal validation results using different AU subsets.}
+\label{tab:au_validation}
+\begin{tabular}{llrrrr}
+\hline
+AU Subset & Model & Acc. & Prec. & Rec. & F1 \\
+\hline
+ALL-17 & Mean+LR & 52.20 & 54.00 & 74.75 & 62.71 \\
+ALL-17 & 1D-CNN & 54.70 & 56.05 & 72.92 & 63.38 \\
+ALL-17 & BiLSTM & 55.38 & 55.00 & 93.50 & 69.26 \\
+\hline
+DDAU-5 & Mean+LR & 53.94 & 54.42 & 88.17 & 67.30 \\
+DDAU-5 & 1D-CNN & 53.94 & 54.41 & 88.33 & 67.34 \\
+DDAU-5 & BiLSTM & 54.57 & 54.26 & 98.67 & 70.02 \\
+\hline
+DDAU-10 & Mean+LR & 52.42 & 53.83 & 80.83 & 64.62 \\
+DDAU-10 & 1D-CNN & 53.41 & 53.79 & 94.58 & 68.58 \\
+DDAU-10 & BiLSTM & 54.93 & 54.59 & 96.08 & 69.63 \\
+\hline
+RAND-5 & Mean+LR & 52.81 & 53.67 & 89.35 & 67.01 \\
+RAND-5 & 1D-CNN & 54.31 & 54.58 & 90.08 & 67.84 \\
+RAND-5 & BiLSTM & 54.08 & 54.11 & 96.31 & 69.27 \\
+\hline
+RAND-10 & Mean+LR & 52.31 & 53.86 & 79.31 & 64.13 \\
+RAND-10 & 1D-CNN & 54.14 & 55.21 & 79.67 & 64.80 \\
+RAND-10 & BiLSTM & 54.61 & 54.86 & 90.14 & 67.99 \\
+\hline
+\end{tabular}
+\end{table}
+
+To further evaluate the temporal discriminability of the identified DDAUs, we conduct an AU-based temporal validation experiment, as shown in Table~\ref{tab:au_validation}. DDAU-5 and DDAU-10 denote model-derived depression-discriminative AU subsets selected by permutation importance, while RAND-5 and RAND-10 denote randomly selected AU subsets averaged over 10 runs. Mean+LR is used as a static baseline based on average AU intensities, while 1D-CNN and BiLSTM are used to learn local and long-range temporal dependencies in AU sequences. The results show that temporal modeling generally improves AU-based depression recognition compared with the static baseline. DDAU-5 achieves the highest F1-score of 70.02\%, and DDAU-10 obtains 69.63\%, both comparable to or slightly higher than ALL-17 with BiLSTM. However, the performance gap between DDAU subsets and random subsets is not large, suggesting that AU-based depression recognition remains challenging when using facial action units alone. Therefore, the DDAU results should be regarded as auxiliary explainability evidence rather than independent clinical markers. Together with the CAM++ visualization and facial localization analysis, these results suggest that ViDA-GCAM captures facial regions and AU dynamics relevant to depression recognition in vlog scenarios.
+
+
+\section{Conclusion}
+This paper proposes ViDA-GCAM, an adaptive cross-modal fusion framework for depression recognition from social media vlogs. The framework integrates spatio-temporal visual, temporal-frequency acoustic, and facial-action–acoustic features to represent heterogeneous behavioral information in unconstrained vlog scenarios. Through gated cross-attention mapping and reconstruction-based autoencoder regularization, ViDA-GCAM adaptively regulates cross-modal information transfer while preserving source-modality information. Experiments on D-Vlog show that ViDA-GCAM achieves 77.94\% precision and 78.23\% F1-score under our implementation, and further ablation, cross-dataset, and explainability analyses support the effectiveness, generalization, and facial-action relevance of the proposed framework.
+
+Several limitations remain. Cross-dataset generalization is still affected by differences in recording conditions, interaction settings, and label distributions. In addition, the identified DDAUs provide auxiliary explainability evidence rather than clinically validated biomarkers. Future work will explore domain adaptation, text-enhanced multimodal fusion, and graph-based AU relationship modeling to improve the robustness and explainability of depression recognition in real-world social media scenarios.
+
+\printcredits
+
+\section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
+During the preparation of this work, the authors used DeepSeek to improve language clarity and readability. After using this tool, the authors reviewed and edited the content as needed and take full responsibility for the content of the manuscript.
+
+\section*{Declaration of competing interest}
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+\section*{Acknowledgement}
+This work was supported by the National Natural Science Foundation of China (No.62236006) and Fundamental and Interdisciplinary Disciplines Breakthrough Plan of the Ministry of Education of China (JYB2025XDXM612).
+
+% \bibliographystyle{cas-model2-names}
+\bibliographystyle{elsarticle-num}
+
+\bibliography{cas-refs}
+
+\end{document}
+

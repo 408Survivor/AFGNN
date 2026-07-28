@@ -1,0 +1,7 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 超过 GitHub 100MB 单文件限制的大视频文件
+paper/-5jl7RzMMFU.mp4

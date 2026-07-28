@@ -1,0 +1,90 @@
+# AFGNN Face-Enhanced + Data Augmentation
+# Face branch: 32 frames + region one-hot + self-loops + training-time augmentation
+# Audio branch: 32 frames
+# Fusion: cross-modal attention
+
+data:
+  processed_dir: /data/ltq/DVlog/processed_official_features
+  num_frames: 32
+  audio_num_frames: 32
+
+model:
+  use_face: true
+  use_audio: true
+
+  # Fusion: "concat" | "cross_attention"
+  fusion_type: "cross_attention"
+  fusion_hidden_dim: 64
+
+  # Face branch
+  face_in_channels: 13      # [x, y, dx, dy] + 9-dim region one-hot
+  face_hidden_channels: 128
+  face_out_channels: 128
+  face_num_layers: 3
+  face_heads: 4
+
+  # Audio branch
+  audio_in_channels: 25
+  audio_hidden_channels: 64
+  audio_out_channels: 64
+  audio_num_layers: 2
+  audio_heads: 4
+
+  # Classification head
+  mlp_hidden: 128
+  dropout: 0.3
+
+  # Face graph structure
+  add_static_edges: true
+  add_temporal_edges: true
+  add_dynamic_edges: false
+  dynamic_k: 2
+  dynamic_metric: "cosine"
+  dynamic_edge_weight: 1.0
+  dynamic_feature: "motion"
+  dynamic_region_restricted: true
+
+  # Face graph enhancements
+  add_region_onehot: true
+  add_self_loops: true
+
+  # Edge type embedding
+  use_edge_type: false
+  num_edge_types: null
+  edge_emb_dim: 4
+
+# Training-time augmentation for facial landmarks
+augmentation:
+  enabled: true
+  rotation_range: [-10.0, 10.0]    # degrees
+  scale_range: [0.95, 1.05]
+  translate_range: [-0.05, 0.05]
+  noise_std: 0.02
+  temporal_mask_prob: 0.2
+  temporal_mask_max_ratio: 0.15
+
+training:
+  batch_size: 32
+  num_workers: 4
+  epochs: 100
+  patience: 15
+  lr: 0.001
+  weight_decay: 0.0001
+  checkpoint_path: experiments/checkpoints/afgnn_face_enhanced_aug_best.pt
+
+  early_stopping_metric: "auc"
+
+  # Loss options: "bce" | "weighted_bce" | "focal"
+  loss: "weighted_bce"
+
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+
+  # Learning rate scheduler
+  scheduler:
+    type: "plateau"
+    factor: 0.5
+    patience: 5
+
+  # Gradient clipping max norm
+  grad_clip: 1.0
