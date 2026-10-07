@@ -2,6 +2,22 @@
 
 > 倒序记录。实验登记的权威索引在 `experiments/INDEX.md`。
 
+## 2026-10-08：GitHub 仓库同步修复后项目 + git 本体迁入工作目录
+
+- 背景：论文（BIBM 2026）被接收。检查发现 GitHub 公开仓库（git 本体在旧路径）
+  仍是坐标修复前的 bug 版本代码，与论文结果不一致；工作目录则完全不在版本控制内。
+- **归档先行**：旧仓库修复前完整状态（含未提交的作废 region_importance_auc 分析）
+  提交到 `archive/pre-coordinate-fix` 分支并推送。
+- **main 同步（commit 32a2c15）**：工作目录的修复后代码、exp_1~103 全部实验记录、
+  文档体系整体同步进 GitHub 仓库；删除作废的旧 checkpoints/results/records/GUIDE.md；
+  `paper/`（camera_ready 等）与 `visualization/`（图表脚本）原样保留。
+- **git 本体迁移**：在 `/home/ltq/Code/AFGNN` 执行 init + fetch + 对齐 main，
+  paper/、visualization/ 迁回工作目录；>100MB 的 mp4（gitignored）从旧路径拷贝过来。
+  **用户规定：今后一切操作只在工作目录进行，旧路径弃用。**
+- 本地排除（`.git/info/exclude`，不进公开仓库）：ReadmeForKimi.md、
+  paper/D-Vlog.pdf、paper/eGeMAPS.pdf。
+- 另：同日完成 Phase D（exp_59~103）补登记，详见下一条。
+
 ## 2026-10-08：Phase D 登记归档（exp_59~exp_103）——全部重跑实验收官
 
 - 背景：Phase D（45 单元）实际已于 **2026-08-22 当晚跑完**（exp_59 起始时间戳
