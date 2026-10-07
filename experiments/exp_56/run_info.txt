@@ -1,0 +1,3 @@
+Start time: 2026-08-22T16:45:47.257559
+Command: src/train.py --config ablation/configs/ablation_random_graph.yaml --seed 44
+Config file: ablation/configs/ablation_random_graph.yaml

@@ -1,0 +1,13 @@
+{
+  "split": "test",
+  "checkpoint": "experiments/exp_67/best_seed46.pt",
+  "config": "experiments/exp_67/config.yaml",
+  "timestamp": "2026-08-22T19:53:25.271577",
+  "metrics": {
+    "accuracy": 0.6792452830188679,
+    "precision": 0.6797385620915033,
+    "recall": 0.8455284552845529,
+    "f1": 0.7536231884057971,
+    "auc": 0.7517127980268568
+  }
+}

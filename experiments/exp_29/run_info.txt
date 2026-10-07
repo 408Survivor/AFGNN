@@ -1,0 +1,3 @@
+Start time: 2026-08-21T23:31:42.453498
+Command: src/train.py --config ablation/configs/ablation_region_mask_03_nose_bridge.yaml --seed 42
+Config file: ablation/configs/ablation_region_mask_03_nose_bridge.yaml

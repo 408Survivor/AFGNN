@@ -3,5 +3,10 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+# 运行留痕与训练产物（exp_N 目录里的 config/history 等文本记录保留，
+# 仅忽略大二进制与可丢弃的 run_context 日志层）
+outputs/
+*.pt
+
 # 超过 GitHub 100MB 单文件限制的大视频文件
 paper/-5jl7RzMMFU.mp4

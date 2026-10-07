@@ -33,30 +33,48 @@ combines the two graph-level embeddings for classification.
 conda activate DVlog
 ```
 
-Required packages: `torch`, `torch_geometric`, `numpy`, `scikit-learn`, `pyyaml`, `tqdm`.
+Required packages: `torch`, `torch_geometric`, `numpy`, `scikit-learn`, `pyyaml`,
+`tqdm`, `matplotlib` (training-curve plots), `pytest` (smoke tests).
 
 ---
 
 ## Quick Start
 
+```bash
+cd /home/ltq/Code/AFGNN
+conda activate DVlog
+```
+
 ### 1. Train
 
+Each training run automatically creates a self-contained experiment folder
+`experiments/exp_N/` (auto-incremented) holding the config snapshot, run info,
+model summary, best checkpoint, training history and training curves:
+
 ```bash
-cd /home/ltq/DepressionCode/DepGNN/AFGNN
-conda activate DVlog
-python src/train.py --config experiments/configs/afgnn_face_only.yaml
+python src/train.py --config experiments/configs/afgnn_base.yaml --seed 42
 ```
 
 ### 2. Test
 
+Evaluation results are written back into the same experiment folder:
+
 ```bash
-cd /home/ltq/DepressionCode/DepGNN/AFGNN
-conda activate DVlog
-python src/test.py --config experiments/configs/afgnn_face_only.yaml --split test
+python src/test.py --exp_dir experiments/exp_1 --split test
 ```
 
-Test results are automatically saved to `experiments/results/test_{split}_results.json`.
-Training history is saved to `experiments/results/training_history.json`.
+`experiments/INDEX.md` is the authoritative index mapping every `exp_N` to its
+config, seed and metrics. To visualize a finished run's training curves:
+
+```bash
+python src/scripts/plot_training_history.py --exp_dir experiments/exp_1
+```
+
+### 3. Smoke tests
+
+```bash
+pytest tests/ -q
+```
 
 ---
 
@@ -65,27 +83,22 @@ Training history is saved to `experiments/results/training_history.json`.
 ```
 AFGNN/
 ├── src/                       # Code
-│   ├── data/                  # Dataset loaders and augmentation
-│   ├── models/                # AFGNN model implementations
-│   ├── utils/                 # Losses, metrics, trainer
-│   ├── scripts/               # Experiment helper scripts
-│   ├── train.py
-│   ├── test.py
-│   ├── train_combined.py
-│   ├── ensemble_test.py
-│   ├── seed_ensemble_test.py
-│   └── seed_stability_test.py
-├── visualization/             # Figure generation scripts
-├── paper/                     # Paper source files and figures
-├── ablation/                  # Ablation study artifacts
-│   ├── configs/
-│   ├── results/
-│   └── checkpoints/
-├── experiments/               # Other experiment artifacts
-│   ├── configs/
-│   ├── results/
-│   └── checkpoints/
-├── records/                   # Notes, logs, and reference documents
+│   ├── data/                  # Dataset loaders, landmark layout parsing, augmentation
+│   ├── models/                # AFGNN model (face/audio GAT branches, fusion)
+│   ├── utils/                 # Builders, losses, metrics, trainer, experiment manager
+│   ├── scripts/               # Helper scripts (processed-feature build, plotting, ...)
+│   ├── train.py               # Training entry (auto-creates experiments/exp_N)
+│   ├── test.py                # Evaluation entry (results written back to exp_N)
+│   └── ...                    # Ensemble / seed-stability evaluation scripts
+├── tests/                     # CPU smoke tests (pytest)
+├── experiments/
+│   ├── configs/               # One YAML per main experiment
+│   ├── exp_N/                 # Self-contained run folders (created automatically)
+│   └── INDEX.md               # Authoritative experiment index
+├── ablation/
+│   └── configs/               # Ablation configs (also numbered into experiments/exp_N)
+├── paper/                     # Reference papers
+├── DATA_DIMENSIONS.md         # Data shapes across processing stages
 └── README.md
 ```
 
@@ -96,7 +109,9 @@ AFGNN/
 - `processed_official_features` is expected to contain:
   - `{split}_visual.npy` and `{split}_labels.npy`
   - `{split}_acoustic.npy`
-- Visual features have shape `(N, 596, 136)` where `136 = 68 landmarks × 2 (x, y)`.
+- Visual features have shape `(N, 596, 136)` in the OpenFace **block layout**
+  `[x_0..x_67, y_0..y_67]` (NOT interleaved `(x, y)` pairs) — always parse them
+  via `src/data/landmark_layout.py` (`flat_to_coords` / `coords_to_flat`).
 - Acoustic features have shape `(N, 596, 25)`.
 - Each face sample is converted into a graph with `T_v × 68` nodes.
 - Each audio sample is converted into a chain graph with `T_a` nodes.

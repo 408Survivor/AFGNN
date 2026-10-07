@@ -7,24 +7,26 @@ selected by the config's use_face / use_audio flags.
 
 Usage:
     conda activate DVlog
-    cd /home/ltq/DepressionCode/DepGNN/AFGNN
+    cd /home/ltq/Code/AFGNN
     python src/train.py --config experiments/configs/afgnn_face_enhanced_focal.yaml
 
-The best checkpoint (with its config embedded) is saved to the config's
-training.checkpoint_path; training history is written to
-`<output_dir>/training_history.json` (rename per GUIDE.md).
+Each run creates a self-contained experiment folder ``experiments/exp_N``
+(auto-incremented; see experiments/INDEX.md) holding the config snapshot,
+run info, model summary, best checkpoint and training history.
 """
 
 import argparse
 import json
 import os
 import random
+import sys
 from datetime import datetime
 
 import numpy as np
 import torch
 
 from utils.builders import build_loaders, build_model, load_config
+from utils.experiment import get_next_exp_dir, save_run_info
 from utils.losses import FocalLoss, compute_class_weights
 from utils.run_context import start_run
 from utils.trainer import train_model
@@ -104,14 +106,20 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default="experiments/configs/afgnn_face_only.yaml",
+        default="experiments/configs/afgnn_base.yaml",
         help="Path to config file",
     )
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="experiments/results",
-        help="Directory to save training history",
+        default=None,
+        help="Directory to save training history (defaults to the experiment folder)",
+    )
+    parser.add_argument(
+        "--exp_base_dir",
+        type=str,
+        default="experiments",
+        help="Base directory for auto-incremented experiment folders (exp_1, exp_2, ...)",
     )
     parser.add_argument(
         "--seed",
@@ -122,8 +130,20 @@ def main():
     args = parser.parse_args()
 
     cfg = load_config(args.config)
+    cfg["_config_path"] = args.config
 
-    run = start_run(cfg, "train", seed=args.seed)
+    exp_dir = get_next_exp_dir(args.exp_base_dir)
+    exp_name = exp_dir.name
+    print("=" * 60)
+    print(f"[Experiment] Start {exp_name}")
+    print(f"  Directory: {exp_dir}")
+    print("=" * 60)
+
+    # Override checkpoint and output paths so everything lives in exp_dir.
+    cfg["training"]["checkpoint_path"] = str(exp_dir / "best.pt")
+    args.output_dir = args.output_dir if args.output_dir is not None else str(exp_dir)
+
+    run = start_run(cfg, "train", expid=exp_name, seed=args.seed)
 
     # Set random seeds if requested
     if args.seed is not None:
@@ -155,6 +175,10 @@ def main():
     print(model)
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Trainable parameters: {num_params:,}")
+
+    # Persist config, model summary and run info in the experiment folder.
+    save_run_info(exp_dir, cfg, model, command=" ".join(sys.argv))
+    print(f"[Experiment] Saved config and model summary to: {exp_dir}")
 
     # Optimizer
     optimizer_type = cfg["training"].get("optimizer", "adam").lower()
@@ -230,10 +254,24 @@ def main():
         json.dump(history_record, f, indent=2)
     print(f"Training history saved to: {history_path}")
 
-    print("\nTraining completed!")
-    print(f"Best checkpoint saved to: {save_path}")
+    # Plot training curves into the experiment folder (never fail training on this)
+    try:
+        from scripts.plot_training_history import load_histories, plot
 
-    run.finalize(checkpoint_path=save_path, history=history)
+        curves_path = os.path.join(args.output_dir, "training_curves.png")
+        plot(load_histories([history_path]), curves_path)
+    except Exception as e:  # noqa: BLE001
+        print(f"[Warn] Failed to plot training curves: {e}")
+
+    print("\n" + "=" * 60)
+    print(f"[Experiment] End {exp_name}")
+    print("=" * 60)
+    print(f"Best checkpoint saved to: {save_path}")
+    print(f"Experiment folder: {exp_dir}")
+    print(f"To evaluate, run:")
+    print(f"  python src/test.py --checkpoint {save_path} --split test")
+
+    run.finalize(checkpoint_path=save_path, history=history, extra={"exp_dir": str(exp_dir)})
 
 
 if __name__ == "__main__":

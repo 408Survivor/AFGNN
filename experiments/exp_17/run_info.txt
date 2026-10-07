@@ -1,0 +1,3 @@
+Start time: 2026-08-21T21:50:29.467914
+Command: src/train.py --config experiments/configs/afgnn_face_enhanced_focal_a05_g15.yaml --seed 45
+Config file: experiments/configs/afgnn_face_enhanced_focal_a05_g15.yaml

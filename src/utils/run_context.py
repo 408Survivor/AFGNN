@@ -26,8 +26,8 @@ import yaml
 def resolve_expid(cfg, seed=None):
     """Derive an experiment id from the config's checkpoint_path.
 
-    Mirrors the GUIDE convention: strip the ``afgnn_`` prefix and ``_best``
-    suffix from the checkpoint filename, then append ``_seed{N}`` if given.
+    Convention: strip the ``afgnn_`` prefix and ``_best`` suffix from the
+    checkpoint filename, then append ``_seed{N}`` if given.
     """
     ckpt = cfg.get("training", {}).get("checkpoint_path", "model")
     stem = os.path.splitext(os.path.basename(ckpt))[0]

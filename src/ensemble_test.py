@@ -56,8 +56,8 @@ EXPERTS = [
     {
         # This is the previous best multimodal model (Face 16 + Audio 32 + Cross-Attn).
         "name": "face_audio_baseline",
-        "config": "experiments/configs/afgnn_face_only.yaml",
-        "checkpoint": "experiments/checkpoints/afgnn_face_only_best.pt",
+        "config": "experiments/configs/afgnn_base.yaml",
+        "checkpoint": "experiments/checkpoints/afgnn_base_best.pt",
     },
     {
         "name": "audio_only",
@@ -210,7 +210,7 @@ def main():
     parser.add_argument(
         "--data_dir",
         type=str,
-        default="/data/ltq/DVlog/processed_official_features",
+        default="/data/ltq/D-Vlog_Raw/processed_official_features",
         help="Directory containing preprocessed D-Vlog features",
     )
     parser.add_argument(

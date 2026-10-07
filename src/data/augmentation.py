@@ -9,6 +9,8 @@ from typing import Tuple
 
 import numpy as np
 
+from data.landmark_layout import coords_to_flat, flat_to_coords
+
 
 def _rotation_matrix(angle_deg: float) -> np.ndarray:
     """Return a 2x2 rotation matrix for the given angle in degrees."""
@@ -106,7 +108,9 @@ def augment_landmark_sequence(
         Augmented visual_seq of shape (T, 136).
     """
     T = visual_seq.shape[0]
-    coords = visual_seq.reshape(T, 68, 2).copy()
+    # OpenFace block layout [x_0..x_67, y_0..y_67] — parse via the shared
+    # entry point, never reshape(T, 68, 2) directly.
+    coords = flat_to_coords(visual_seq).copy()
 
     # Order: affine -> noise -> temporal mask
     coords = random_affine_transform(
@@ -122,4 +126,4 @@ def augment_landmark_sequence(
         max_mask_ratio=temporal_mask_max_ratio,
     )
 
-    return coords.reshape(T, 136).astype(np.float32)
+    return coords_to_flat(coords).astype(np.float32)

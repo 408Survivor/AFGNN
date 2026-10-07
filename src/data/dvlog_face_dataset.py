@@ -12,6 +12,7 @@ from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 
 from data.augmentation import augment_landmark_sequence
+from data.landmark_layout import check_visual_array
 from models.graph_utils import build_audio_graph, build_face_graph, compute_audio_norm_stats
 
 
@@ -85,6 +86,8 @@ class DVlogFaceDataset(Dataset):
 
         self.visual = np.load(visual_path).astype(np.float32)
         self.labels = np.load(labels_path).astype(np.int64)
+        # Fail fast on coordinate-layout regressions (see data.landmark_layout).
+        check_visual_array(self.visual, name=visual_path)
         self.num_frames = num_frames
         self.audio_num_frames = audio_num_frames if audio_num_frames is not None else num_frames
         self.add_static_edges = add_static_edges
@@ -226,6 +229,8 @@ class DVlogFaceArrayDataset(Dataset):
     ):
         self.visual = np.asarray(visual, dtype=np.float32)
         self.labels = np.asarray(labels, dtype=np.int64)
+        # Fail fast on coordinate-layout regressions (see data.landmark_layout).
+        check_visual_array(self.visual, name="visual array")
         self.num_frames = num_frames
         self.audio_num_frames = audio_num_frames if audio_num_frames is not None else num_frames
         self.add_static_edges = add_static_edges

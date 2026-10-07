@@ -64,7 +64,7 @@ def main():
     parser.add_argument(
         "--data_dir",
         type=str,
-        default="/data/ltq/DVlog/processed_official_features",
+        default="/data/ltq/D-Vlog_Raw/processed_official_features",
         help="Directory containing preprocessed D-Vlog features",
     )
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size for inference")

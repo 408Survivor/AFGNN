@@ -1,0 +1,3 @@
+Start time: 2026-08-22T15:46:32.857663
+Command: src/train.py --config ablation/configs/ablation_full.yaml --seed 45
+Config file: ablation/configs/ablation_full.yaml

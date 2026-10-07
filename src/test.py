@@ -7,13 +7,14 @@ embedded in the checkpoint when present, otherwise from --config.
 
 Usage:
     conda activate DVlog
-    cd /home/ltq/DepressionCode/DepGNN/AFGNN
-    python src/test.py --config experiments/configs/afgnn_face_enhanced_focal.yaml --split test
+    cd /home/ltq/Code/AFGNN
+    python src/test.py --checkpoint experiments/exp_1/best_seed42.pt --split test
 
-Results are saved to `<output_dir>/test_{split}_results.json` (rename per GUIDE.md).
+Results are saved to the experiment folder as `test_{split}_results.json`.
 """
 
 import argparse
+import glob
 import json
 import os
 from datetime import datetime
@@ -21,6 +22,7 @@ from datetime import datetime
 import torch
 
 from utils.builders import build_loaders, build_model, load_config
+from utils.experiment import get_latest_exp_dir, infer_exp_dir_from_checkpoint
 from utils.run_context import start_run
 from utils.trainer import evaluate
 
@@ -30,14 +32,14 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default="experiments/configs/afgnn_face_only.yaml",
-        help="Path to config file",
+        default=None,
+        help="Path to config file (defaults to <exp_dir>/config.yaml when --exp_dir is given)",
     )
     parser.add_argument(
         "--checkpoint",
         type=str,
         default=None,
-        help="Path to model checkpoint (defaults to config's training.checkpoint_path)",
+        help="Path to model checkpoint (defaults to <exp_dir>/best_seed*.pt or the config's training.checkpoint_path)",
     )
     parser.add_argument(
         "--split",
@@ -49,16 +51,49 @@ def main():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="experiments/results",
-        help="Directory to save test results",
+        default=None,
+        help="Directory to save test results (defaults to the experiment folder)",
+    )
+    parser.add_argument(
+        "--exp_dir",
+        type=str,
+        default=None,
+        help="Experiment directory (e.g. experiments/exp_3). If omitted, inferred from the checkpoint path or latest experiment.",
     )
     args = parser.parse_args()
 
+    # When --exp_dir is given, default config/checkpoint come from that folder.
+    if args.config is None:
+        if args.exp_dir is not None:
+            candidate = os.path.join(args.exp_dir, "config.yaml")
+            if os.path.exists(candidate):
+                args.config = candidate
+        if args.config is None:
+            args.config = "experiments/configs/afgnn_base.yaml"
+
     cfg = load_config(args.config)
 
-    # Default checkpoint from config if not provided
+    # Default checkpoint: exp_dir's seed checkpoint, then config's path.
     if args.checkpoint is None:
-        args.checkpoint = cfg["training"]["checkpoint_path"]
+        if args.exp_dir is not None:
+            matches = sorted(glob.glob(os.path.join(args.exp_dir, "best_seed*.pt")))
+            if matches:
+                args.checkpoint = matches[0]
+        if args.checkpoint is None:
+            args.checkpoint = cfg["training"]["checkpoint_path"]
+
+    # Resolve experiment directory for saving results.
+    if args.exp_dir is not None:
+        exp_dir = args.exp_dir
+    else:
+        inferred = infer_exp_dir_from_checkpoint(args.checkpoint)
+        if inferred is not None:
+            exp_dir = str(inferred)
+        else:
+            latest = get_latest_exp_dir("experiments")
+            exp_dir = str(latest) if latest is not None else "experiments/results"
+    args.output_dir = args.output_dir if args.output_dir is not None else exp_dir
+    print(f"[Experiment] Saving test results to: {args.output_dir}")
 
     # Device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -78,7 +113,7 @@ def main():
         run_cfg = cfg
         print("[Config] Checkpoint has no embedded config; falling back to --config")
 
-    run = start_run(run_cfg, "eval")
+    run = start_run(run_cfg, "eval", expid=os.path.basename(exp_dir.rstrip("/")))
 
     # Data loader + model, built from the resolved config
     loaders = build_loaders(run_cfg, augment=False)
@@ -122,7 +157,7 @@ def main():
     run.finalize(
         checkpoint_path=args.checkpoint,
         metrics=metrics,
-        extra={"split": args.split},
+        extra={"split": args.split, "exp_dir": exp_dir},
     )
 
 

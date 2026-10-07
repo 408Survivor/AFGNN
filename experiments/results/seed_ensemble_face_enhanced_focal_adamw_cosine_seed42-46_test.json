@@ -1,0 +1,27 @@
+{
+  "split": "test",
+  "config": "experiments/exp_7/config.yaml",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "checkpoints": [
+    "experiments/exp_7/best_seed42.pt",
+    "experiments/exp_11/best_seed43.pt",
+    "experiments/exp_12/best_seed44.pt",
+    "experiments/exp_13/best_seed45.pt",
+    "experiments/exp_14/best_seed46.pt"
+  ],
+  "timestamp": "2026-08-22T15:37:38.361971",
+  "threshold": 0.31,
+  "metrics": {
+    "accuracy": 0.7264150943396226,
+    "precision": 0.7152317880794702,
+    "recall": 0.8780487804878049,
+    "f1": 0.7883211678832117,
+    "auc": 0.7990316981821504
+  }
+}

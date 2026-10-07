@@ -1,0 +1,3 @@
+Start time: 2026-08-21T21:35:09.639866
+Command: src/train.py --config experiments/configs/afgnn_face_enhanced_focal_adamw_cosine.yaml --seed 44
+Config file: experiments/configs/afgnn_face_enhanced_focal_adamw_cosine.yaml

@@ -11,6 +11,8 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 
+from data.landmark_layout import flat_to_coords
+
 
 # ---------------------------------------------------------------------------
 # 68-point facial landmark topology (Dlib / OpenFace convention, 0-based index)
@@ -481,7 +483,9 @@ def build_face_graph(
         torch_geometric.data.Data with x, edge_index, edge_weight, edge_type, y.
     """
     sampled = sample_frames(visual_seq, num_frames)
-    coords = sampled.reshape(num_frames, 68, 2)
+    # D-Vlog visual features use the OpenFace block layout
+    # [x_0..x_67, y_0..y_67]; parse via the single shared entry point.
+    coords = flat_to_coords(sampled)
 
     if use_velocity:
         velocity = compute_velocity(coords)

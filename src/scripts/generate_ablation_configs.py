@@ -9,7 +9,7 @@ import yaml
 
 BASE_CONFIG = {
     "data": {
-        "processed_dir": "/data/ltq/DVlog/processed_official_features",
+        "processed_dir": "/data/ltq/D-Vlog_Raw/processed_official_features",
         "num_frames": 32,
         "audio_num_frames": 32,
     },
