@@ -1,0 +1,292 @@
+{
+  "analysis": "region_importance_auc",
+  "masking": "inference_time_onehot_zero",
+  "note": "AUC-based region importance, separate from the F1-based retraining ablation (test_ablation_region_mask_*). Full-model checkpoints are loaded per seed; each region's one-hot column is zeroed at inference time; dAUC = AUC_full - AUC_masked is compared across seeds with paired Wilcoxon signed-rank and paired t-test (Holm-corrected).",
+  "config": "experiments/configs/afgnn_face_enhanced_focal.yaml",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "split": "test",
+  "checkpoints": [
+    "experiments/checkpoints/afgnn_face_enhanced_focal_best_seed42.pt",
+    "experiments/checkpoints/afgnn_face_enhanced_focal_best_seed43.pt",
+    "experiments/checkpoints/afgnn_face_enhanced_focal_best_seed44.pt",
+    "experiments/checkpoints/afgnn_face_enhanced_focal_best_seed45.pt",
+    "experiments/checkpoints/afgnn_face_enhanced_focal_best_seed46.pt"
+  ],
+  "timestamp": "2026-08-19T01:20:49.961969",
+  "per_seed": [
+    {
+      "seed": 42,
+      "auc_full": 0.7961998721110808,
+      "auc_masked": {
+        "face_contour": 0.7919978076185257,
+        "left_eyebrow": 0.7972960628482689,
+        "right_eyebrow": 0.793276696811912,
+        "nose_bridge": 0.7941901890929022,
+        "nose_bottom": 0.7876130446697724,
+        "left_eye": 0.7969306659358729,
+        "right_eye": 0.7961998721110806,
+        "outer_mouth": 0.7966566182515757,
+        "inner_mouth": 0.7963825705672787
+      }
+    },
+    {
+      "seed": 43,
+      "auc_full": 0.8052434456928838,
+      "auc_masked": {
+        "face_contour": 0.8051520964647848,
+        "left_eyebrow": 0.8073444779391614,
+        "right_eyebrow": 0.8072531287110624,
+        "nose_bridge": 0.8065223348862701,
+        "nose_bottom": 0.8054261441490819,
+        "left_eye": 0.8076185256234585,
+        "right_eye": 0.805882890289577,
+        "outer_mouth": 0.8037818580432995,
+        "inner_mouth": 0.8078925733077555
+      }
+    },
+    {
+      "seed": 44,
+      "auc_full": 0.7882524892664657,
+      "auc_masked": {
+        "face_contour": 0.7850552662829999,
+        "left_eyebrow": 0.7924545537590207,
+        "right_eyebrow": 0.7900794738284461,
+        "nose_bridge": 0.7877043938978715,
+        "nose_bottom": 0.7908102676532383,
+        "left_eye": 0.7826801863524253,
+        "right_eye": 0.7902621722846442,
+        "outer_mouth": 0.7874303462135746,
+        "inner_mouth": 0.7850552662829998
+      }
+    },
+    {
+      "seed": 45,
+      "auc_full": 0.809628208641637,
+      "auc_masked": {
+        "face_contour": 0.8031424134466063,
+        "left_eyebrow": 0.8077098748515575,
+        "right_eyebrow": 0.8076185256234585,
+        "nose_bridge": 0.8061569379738742,
+        "nose_bottom": 0.8049693980085869,
+        "left_eye": 0.8110897962912214,
+        "right_eye": 0.8044213026399928,
+        "outer_mouth": 0.8046040010961907,
+        "inner_mouth": 0.8109984470631223
+      }
+    },
+    {
+      "seed": 46,
+      "auc_full": 0.7844158216863067,
+      "auc_masked": {
+        "face_contour": 0.7824061386681282,
+        "left_eyebrow": 0.7849639170549008,
+        "right_eyebrow": 0.785603361651594,
+        "nose_bridge": 0.7838677263177127,
+        "nose_bottom": 0.7849639170549009,
+        "left_eye": 0.7871562985292774,
+        "right_eye": 0.7847812185987028,
+        "outer_mouth": 0.7825888371243265,
+        "inner_mouth": 0.785329313967297
+      }
+    }
+  ],
+  "regions": {
+    "face_contour": {
+      "delta_per_seed": [
+        0.004202064492555113,
+        9.134922809894697e-05,
+        0.0031972229834658084,
+        0.006485795195030675,
+        0.0020096830181784986
+      ],
+      "mean": 0.0031972229834658084,
+      "std": 0.0023917105072780416,
+      "ci95": [
+        0.0002275221524529968,
+        0.0061669238144786195
+      ],
+      "p_wilcoxon": 0.0625,
+      "p_ttest": 0.04037156310837148,
+      "wilcoxon_note": null,
+      "p_wilcoxon_holm": 0.5625,
+      "p_ttest_holm": 0.3633440679753433
+    },
+    "left_eyebrow": {
+      "delta_per_seed": [
+        -0.0010961907371881408,
+        -0.0021010322462776676,
+        -0.004202064492555002,
+        0.0019183337900794406,
+        -0.0005480953685940149
+      ],
+      "mean": -0.001205809810907077,
+      "std": 0.0022351646021391324,
+      "ci95": [
+        -0.003981133227442683,
+        0.0015695136056285291
+      ],
+      "p_wilcoxon": 0.3125,
+      "p_ttest": 0.2941694172492429,
+      "wilcoxon_note": null,
+      "p_wilcoxon_holm": 1.0,
+      "p_ttest_holm": 1.0
+    },
+    "right_eyebrow": {
+      "delta_per_seed": [
+        0.0029231752991687454,
+        -0.0020096830181786096,
+        -0.0018269845619803826,
+        0.0020096830181784986,
+        -0.0011875399652871987
+      ],
+      "mean": -1.8269845619789392e-05,
+      "std": 0.0023113340476527255,
+      "ci95": [
+        -0.0028881701204127677,
+        0.0028516304291731887
+      ],
+      "p_wilcoxon": 1.0,
+      "p_ttest": 0.9867446816615162,
+      "wilcoxon_note": null,
+      "p_wilcoxon_holm": 1.0,
+      "p_ttest_holm": 1.0
+    },
+    "nose_bridge": {
+      "delta_per_seed": [
+        0.0020096830181786096,
+        -0.0012788891933863678,
+        0.0005480953685942369,
+        0.0034712706677627603,
+        0.0005480953685940149
+      ],
+      "mean": 0.0010596510459486507,
+      "std": 0.0017825977407728835,
+      "ci95": [
+        -0.0011537363920484092,
+        0.0032730384839457106
+      ],
+      "p_wilcoxon": 0.3125,
+      "p_ttest": 0.2545235553516403,
+      "wilcoxon_note": null,
+      "p_wilcoxon_holm": 1.0,
+      "p_ttest_holm": 1.0
+    },
+    "nose_bottom": {
+      "delta_per_seed": [
+        0.008586827441308342,
+        -0.00018269845619811598,
+        -0.0025577783867725135,
+        0.00465881063305007,
+        -0.0005480953685941259
+      ],
+      "mean": 0.0019914131725587312,
+      "std": 0.004541076618959328,
+      "ci95": [
+        -0.0036470781782879493,
+        0.007629904523405412
+      ],
+      "p_wilcoxon": 0.8125,
+      "p_ttest": 0.38231515716583764,
+      "wilcoxon_note": null,
+      "p_wilcoxon_holm": 1.0,
+      "p_ttest_holm": 1.0
+    },
+    "left_eye": {
+      "delta_per_seed": [
+        -0.0007307938247921308,
+        -0.0023750799305747305,
+        0.005572302914040428,
+        -0.0014615876495843727,
+        -0.0027404768429706294
+      ],
+      "mean": -0.0003471270667762871,
+      "std": 0.003401087687734209,
+      "ci95": [
+        -0.004570135203369948,
+        0.003875881069817374
+      ],
+      "p_wilcoxon": 0.625,
+      "p_ttest": 0.8306665079301845,
+      "wilcoxon_note": null,
+      "p_wilcoxon_holm": 1.0,
+      "p_ttest_holm": 1.0
+    },
+    "right_eye": {
+      "delta_per_seed": [
+        2.220446049250313e-16,
+        -0.0006394445966932949,
+        -0.0020096830181784986,
+        0.005206906001644196,
+        -0.0003653969123960099
+      ],
+      "mean": 0.0004384762948753229,
+      "std": 0.002771813167112108,
+      "ci95": [
+        -0.003003184324474942,
+        0.003880136914225588
+      ],
+      "p_wilcoxon": 0.8125,
+      "p_ttest": 0.741401084676991,
+      "wilcoxon_note": null,
+      "p_wilcoxon_holm": 1.0,
+      "p_ttest_holm": 1.0
+    },
+    "outer_mouth": {
+      "delta_per_seed": [
+        -0.0004567461404949569,
+        0.0014615876495842617,
+        0.0008221430528911888,
+        0.005024207545446302,
+        0.0018269845619802716
+      ],
+      "mean": 0.0017356353338814135,
+      "std": 0.0020334182232165806,
+      "ci95": [
+        -0.0007891868671780849,
+        0.0042604575349409115
+      ],
+      "p_wilcoxon": 0.125,
+      "p_ttest": 0.12895259580133045,
+      "wilcoxon_note": null,
+      "p_wilcoxon_holm": 1.0,
+      "p_ttest_holm": 1.0
+    },
+    "inner_mouth": {
+      "delta_per_seed": [
+        -0.00018269845619789393,
+        -0.0026491276148717935,
+        0.0031972229834659194,
+        -0.0013702384214853147,
+        -0.0009134922809902468
+      ],
+      "mean": -0.0003836667580158659,
+      "std": 0.0021937132461244467,
+      "ci95": [
+        -0.0031075215181113097,
+        0.0023401880020795783
+      ],
+      "p_wilcoxon": 0.625,
+      "p_ttest": 0.7156792300714951,
+      "wilcoxon_note": null,
+      "p_wilcoxon_holm": 1.0,
+      "p_ttest_holm": 1.0
+    }
+  },
+  "ranking": [
+    "face_contour",
+    "nose_bottom",
+    "outer_mouth",
+    "nose_bridge",
+    "right_eye",
+    "right_eyebrow",
+    "left_eye",
+    "inner_mouth",
+    "left_eyebrow"
+  ]
+}
