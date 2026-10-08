@@ -188,3 +188,49 @@ Phase D 多 seed 验证为种子噪声（5 seeds 均值差仅 -0.0045）。
 **结论**：9 个面部区域逐一 mask 后 5 seeds 均值差全部落在 ±0.015 以内，
 无任一区域表现出超过种子噪声的不可替代性（单 seed 下 exp_33 外唇 +0.022
 的现象在多 seed 下不成立）。
+
+## Phase E：camera-ready 补实验（exp_104~132，2026-10-08 完成）
+
+29 单元全部完成（无中断编号），test 集 mean±std：
+
+| 配置 | exp | seeds | Acc | F1 | AUC |
+|------|-----|-------|-----|-----|-----|
+| ablation_dynamic_k1 | 104~108 | 42~46 | 0.743±0.010 | 0.792±0.013 | 0.789±0.017 |
+| ablation_dynamic_k2_motion | 109~113 | 42~46 | 0.725±0.011 | 0.781±0.015 | 0.779±0.015 |
+| afgnn_focal_adamw_cosine_audio16 | 114~118 | 42~46 | 0.703±0.009 | 0.756±0.017 | 0.775±0.007 |
+| afgnn_focal_adamw_cosine_audio64 | 119~123 | 42~46 | 0.712±0.023 | 0.777±0.022 | 0.770±0.018 |
+| afgnn_focal_adamw_cosine_concat | 124~128 | 42~46 | 0.716±0.017 | 0.780±0.009 | 0.774±0.012 |
+| afgnn_face_enhanced（weighted BCE） | 129~132 | 43~46 | 0.728±0.005 | 0.778±0.015 | 0.771±0.013 |
+
+对照 full（focal 主配置 exp_7/11~14）：F1 0.789±0.010 / AUC 0.788±0.009。
+
+**结论**：动态 kNN 图（k=1 full feature / k=2 motion）不优于静态 AU 解剖学图
+（k=1 打平属噪声，k=2 略低）；音频 32 帧最优（16/64 均降）；gated 融合优于
+concat（F1 +0.008 / AUC +0.014）；focal loss 优于 weighted BCE
+（F1 +0.011 / AUC +0.017）。
+
+## DepMamba 同 split 重跑（2026-10-08，/home/ltq/Code/baselines/DepMamba）
+
+官方代码 + 官方 D-Vlog 7:1:2 划分，超参全默认，seeds 42~46：
+单模型 **F1 0.747±0.011 / AUC 0.748±0.014**（Acc 0.680±0.023）；
+5-seed 集成 F1 0.765 / AUC 0.772。同 split 下 AFGNN 全面占优。
+详见 `paper/camera_ready/revision_log.md` C2 节。
+
+## Camera-ready 补充分析（2026-10-08，experiments/analysis/）
+
+- **消融显著性**（`src/scripts/ablation_significance.py`，paired Wilcoxon vs full，
+  共有 seeds，产物 `experiments/analysis/ablation_significance.json`）：
+  full F1 0.7888±0.0097 / AUC 0.7881±0.0089。边界显著项（n=5 最小双侧 p=0.0625）：
+  audio_only ΔF1 -0.041 / ΔAUC -0.046；audio16 ΔF1 -0.033；no_selfloop ΔF1 -0.022；
+  no_region ΔF1 -0.015（AUC 均不显著）。其余全部 p≥0.125（种子噪声内）。
+- **鲁棒性**（`src/scripts/robustness_eval.py`，5 seeds × 10 条件，test 推理级，
+  详见 `experiments/analysis/robustness.json`）：
+  - 面部帧随机置零（坐标/速度置零、保留区域 one-hot，模拟检测失败）
+    p=0.1/0.25/0.5/0.75/1.0 → AUC 0.784/0.779/0.740/0.687/0.618（clean 0.788）：
+    中度缺失（≤25%）几乎无损，之后单调退化；p=1.0 时 F1 仍 0.728（音频分支兜底，
+    recall 0.97）。
+  - 音频高斯噪声（std=α×样本 std）α=0.1/0.25/0.5/1.0 →
+    AUC 0.788/0.787/0.781/0.776：噪声鲁棒性强（α=1.0 仅 -0.012）。
+- **亚组分析**（`src/scripts/subgroup_analysis.py`）：female(146) F1 0.775±0.022 /
+  AUC 0.788±0.009；male(66) F1 0.814±0.019 / AUC 0.795±0.029；subject 级
+  （179 subjects，概率按 channelId 平均）F1 0.774±0.013 / AUC 0.797±0.010。

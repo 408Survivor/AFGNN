@@ -236,3 +236,29 @@
 - 按 `experiments/configs/`（10 个）和 `ablation/configs/`（16 个）原配置重跑，
   seeds 42~46，由用户亲自执行，结果登记 INDEX.md。
 - ⚠️ 超参是修复前错误特征上调出的，先原样重跑作对照，不调参。
+
+---
+
+## 2026-10-08：camera-ready 冲刺（Phase E + DepMamba + R1-5 核查）
+
+- **Phase E 29 单元全部完成**（exp_104~132）：dynamic k=1 / dynamic k=2 motion /
+  audio16 / audio64 / concat / weighted-BCE 六组多 seed 消融，结果登记 INDEX.md 末节。
+- **DepMamba 同 split 重跑完成**（`/home/ltq/Code/baselines/DepMamba`，GPU 1）：
+  单模型 5 seeds F1 0.747±0.011 / AUC 0.748±0.014；5-seed 集成 F1 0.765 / AUC 0.772。
+  本地改动：迭代 3→5（seed 42~46）、补 AUC 与概率落盘、适配 causal-conv1d 1.5.0 API。
+- **R1-5 核查结论**：D-Vlog 官方划分 subject-disjoint（816 频道 0 跨 train/valid/test，
+  channelId×fold 连接经 duration+label 961/961 验证）。
+- camera-ready 修改台账：`paper/camera_ready/revision_log.md`（C/C2 节已填结果，
+  A2/A3/A4 数据行标 ✅(数据)，tex 改写待做）。
+
+### 同日：审稿响应补充分析（1~4 项，全部完成）
+
+- 新增三个脚本（`src/scripts/`，不改现有源码）：
+  `ablation_significance.py`（paired Wilcoxon vs full）、
+  `robustness_eval.py`（推理级面部帧置零/音频加噪，5 seeds × 10 条件）、
+  `subgroup_analysis.py`（性别亚组 + channelId subject 级聚合）。
+- 产物：`experiments/analysis/{ablation_significance,robustness,subgroup_analysis}.json`
+  + `clean_test_probs_seed42..46.json`。结果已登记 INDEX.md 末节，
+  revision_log R1-1/R1-6 标 ✅(分析/实验)。
+- 关键结论：n=5 时 Wilcoxon 最小 p=0.0625（audio_only/audio16/no_selfloop 边界显著）；
+  面部帧缺失 ≤25% AUC 几乎无损；音频噪声鲁棒；性别亚组与 subject 级指标稳定。

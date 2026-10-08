@@ -1,0 +1,3 @@
+Start time: 2026-10-08T15:50:53.433401
+Command: src/train.py --config experiments/configs/afgnn_focal_adamw_cosine_audio64.yaml --seed 42
+Config file: experiments/configs/afgnn_focal_adamw_cosine_audio64.yaml

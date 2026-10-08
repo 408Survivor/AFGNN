@@ -1,0 +1,3 @@
+Start time: 2026-10-08T09:57:53.065170
+Command: src/train.py --config ablation/configs/ablation_dynamic_k1.yaml --seed 45
+Config file: ablation/configs/ablation_dynamic_k1.yaml
