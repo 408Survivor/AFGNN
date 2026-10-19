@@ -5,48 +5,52 @@
 
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
-\usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{booktabs}
-\usepackage{multirow}
-\usepackage[caption=false,font=footnotesize]{subfig}
+\setcounter{topnumber}{3}
+\setcounter{dbltopnumber}{2}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\bottomfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.85}
+\renewcommand{\dblfloatpagefraction}{0.85}
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\abovedisplayskip}{5pt plus 1pt minus 2pt}
+\setlength{\belowdisplayskip}{5pt plus 1pt minus 2pt}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-% \title{AFGNN: Action Unit-Informed Facial-Audio Graph Network for Vlog-Based Depression Detection\thanks{This work is supported by the National Natural Science Foundation of China (No.62236006) and the Fundamental and Interdisciplinary Disciplines Breakthrough Plan of the Ministry of Education of China (JYB2025XDXM612). Corresponding author: Baobin Li (email: libb@ucas.ac.cn)}}
-\title{AFGNN: Action Unit-Informed Facial-Audio Graph Network for Vlog-Based Depression Detection}
-
+\title{AFGNN: Action Unit-Informed Facial-Audio Graph Network for Vlog-Based Depression Detection\thanks{This work is supported by the National Natural Science Foundation of China (No.62236006) and the Fundamental and Interdisciplinary Disciplines Breakthrough Plan of the Ministry of Education of China (JYB2025XDXM612). Corresponding author: Baobin Li (email: libb@ucas.ac.cn)}}
 
 \author{
-\IEEEauthorblockN{Anonymous Authors}
-\IEEEauthorblockA{Anonymous Affiliations}
+\IEEEauthorblockN{
+Tongqing Liu\IEEEauthorrefmark{1},
+Lihong Qiao\IEEEauthorrefmark{2},
+Tong Zhao\IEEEauthorrefmark{3},
+Baobin Li\IEEEauthorrefmark{1}
 }
-% \author{
-% \IEEEauthorblockN{
-% Tongqing Liu\IEEEauthorrefmark{1},
-% Lihong Qiao\IEEEauthorrefmark{2},
-% Tong Zhao\IEEEauthorrefmark{3},
-% Baobin Li\IEEEauthorrefmark{1}
-% }
-% \IEEEauthorblockA{\IEEEauthorrefmark{1}School of Computer Science and Technology,
-% 		University of Chinese Academy of Sciences, Beijing, China
-% }
-
-% \IEEEauthorblockA{
-% \IEEEauthorrefmark{2}Chongqing University of Posts and Telecommunications, Chongqing, China
-% }
-
-% \IEEEauthorblockA{
-% \IEEEauthorrefmark{3}School of Mathematical Sciences, University of Chinese Academy of Sciences, Beijing, China
-% }
-% }
+\IEEEauthorblockA{\IEEEauthorrefmark{1}School of Computer Science and Technology,
+		University of Chinese Academy of Sciences, Beijing, China
+}
+\IEEEauthorblockA{
+\IEEEauthorrefmark{2}Chongqing University of Posts and Telecommunications, Chongqing, China
+}
+\IEEEauthorblockA{
+\IEEEauthorrefmark{3}School of Mathematical Sciences, University of Chinese Academy of Sciences, Beijing, China
+}
+}
 
 \maketitle
 \begin{abstract}
-Vlog-based depression detection aims to identify depression-related behavioral patterns from naturalistic social-media videos. However, unconstrained vlog recordings often contain variations in facial visibility, speaking style, audio quality, and recording environment, making it difficult to capture structured facial-audio relations with sequential or global multimodal representations. This paper proposes an Action Unit-informed facial-audio graph network for this task. The proposed framework represents facial landmarks as an AU-informed spatio-temporal graph, where facial-topology edges model local facial action-related relations and temporal edges capture landmark motion. Acoustic descriptors are represented as an audio temporal graph to model short-term acoustic continuity. The two graph representations are encoded by modality-specific graph attention branches and integrated through bidirectional graph-level cross-modal gating. Experiments on D-Vlog show that the proposed method achieves an F1-score of 0.788 and an AUC of 0.799, outperforming a strong Mamba-based baseline re-run under the identical official split. The framework also transfers to the LMVD dataset without hyper-parameter tuning. Ablation studies over five random seeds demonstrate the complementarity of the facial and audio branches and the benefit of graph-level gated fusion, and show that the AU-informed static facial graph matches learned dynamic graph alternatives at no extra cost.
+Vlog-based depression detection aims to identify depression-related behavioral patterns from naturalistic social-media videos. However, unconstrained vlog recordings contain large variations in facial visibility, speaking style, audio quality, and recording environment, making it difficult to capture structured facial-audio relations with sequential or global multimodal representations. This paper proposes an Action Unit-informed facial-audio graph network (AFGNN) for this task. Facial landmarks are represented as an AU-informed spatio-temporal graph, where facial-topology edges model local action-related relations and temporal edges capture landmark motion, and acoustic descriptors are represented as an audio temporal graph. The two graphs are encoded by modality-specific graph attention branches and integrated through bidirectional graph-level cross-modal gating. Under a five-seed protocol on D-Vlog, AFGNN achieves an F1-score of 0.788 and an AUC of 0.799, outperforming a strong Mamba-based baseline re-run under the identical official split. Retrained on LMVD with hyper-parameters carried over from D-Vlog, the framework maintains an AUC of 0.787, and a zero-shot face-only variant transfers across datasets without collapse. Ablation studies indicate the complementarity of the facial and audio branches and the benefit of graph-level gated fusion, and detect no statistically significant difference between the AU-informed static topology and learned dynamic graph alternatives.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -55,34 +59,18 @@ Depression detection, graph neural networks, multimodal fusion, cross-modal gati
 
 \section{Introduction}
 \label{sec:intro}
-Depression is a common mental health disorder that affects emotional well-being, social functioning, and daily activities. Conventional depression screening and assessment usually rely on clinical interviews and self-report questionnaires, which may be affected by reporting bias, response burden, and unequal access to mental health resources. These limitations have motivated computational detection from observable behavioral signals. Among such signals, facial behavior and acoustic patterns are widely studied because depression-related states may be reflected in reduced facial expressiveness, psychomotor changes, and altered vocal prosody~\cite{cohn2009detecting,cummins2015review,yang2013vocal}.
+Depression is a common mental health disorder that affects emotional well-being, social functioning, and daily activities. Conventional screening relies on clinical interviews and self-report questionnaires, which are subject to reporting bias and unequal access to mental-health resources, motivating computational detection from observable behavior. Facial behavior and vocal prosody are widely used signals, as depression-related states may be reflected in reduced facial expressiveness, psychomotor changes, and altered speech~\cite{cohn2009detecting,cummins2015review,yang2013vocal}. While interview-based benchmarks such as AVEC and DAIC-WOZ provide controlled protocols for depression assessment~\cite{valstar2014avec,gratch2014daic}, user-generated vlogs capture behavior in less constrained social-media environments, and D-Vlog and LMVD have become representative vlog-based datasets~\cite{yoon2022dvlog,he2024lmvd}. The large variability of vlog recordings in facial visibility, speaking style, and recording conditions makes it difficult to rely on frame-level sequences or global multimodal features alone, and motivates structured behavioral representations.
 
-Audio-visual depression detection has been widely studied in interview-based settings. Benchmarks such as AVEC and DAIC-WOZ provide controlled protocols for analyzing facial behavior, head movement, speech, and language in depression assessment~\cite{valstar2014avec,gratch2014daic,ringeval2017avec}. Recent multimodal datasets have further broadened this setting to more diverse recording conditions~\cite{zou2023cmdc,uddin2023deep}. In contrast,  user-generated vlogs capture facial and acoustic behaviors in less constrained social-media environments. D-Vlog and LMVD are representative vlog-based datasets for studying depression-related behaviors in social-media videos~\cite{yoon2022dvlog,he2024lmvd}.
-However, vlog recordings are substantially less controlled than interview videos, with large variations in facial visibility, speaking style, audio quality, recording environment, and background context. Such variability makes it difficult to rely only on frame-level sequences or global multimodal features, and motivates structured behavioral representations that explicitly model the organization of facial and acoustic behavior.
+Recent studies have improved temporal representation learning and multimodal fusion for depression detection, exploring time-aware attention, spatio-temporal transformers, Mamba-based sequence encoders, and cross-modal fusion~\cite{model:TAMFN,tao2024depmstat,xing2024emomamba,liu2024mddmamba,zhao2025decoupled}, and graph-based representations have been introduced to model spatio-temporal facial dependencies~\cite{xu2025twostage,model:MSI-Net}. However, facial landmarks are still mostly treated as coordinate sequences or generic spatio-temporal inputs, while their action-related organization remains insufficiently explored. Anatomically, landmarks are grouped around facial action-related regions described by the Facial Action Coding System (FACS), in which Action Units provide a standard description of visible facial muscle movements~\cite{ekman1978facs,baltrusaitis2018openface}, and graph-based relational reasoning has proven useful for modeling dependencies among facial regions and action units in expression and AU recognition~\cite{song2021uncertain,liao2022fergcn}. Since vlog-based datasets rarely provide AU annotations, recent work uses statistically significant Action Units as covariates to guide graph attention~\cite{zhao2026covariate}; we instead adopt an AU-informed design that encodes action-related topology structurally, without requiring AU labels.
 
-To handle the variability of audio-visual behavior in vlog recordings, recent studies have improved temporal representation learning and multimodal fusion for depression detection. Representative methods have explored time-aware attention, spatio-temporal transformers, Mamba-based sequence encoders, temporal-difference attention, and cross-modal fusion to capture behavioral dynamics and modality complementarity~\cite{model:TAMFN,tao2024depmstat,xing2024emomamba,liu2024mddmamba,hu2024sedcfn,jia2024bmbrt,zhang2024mtdan,zhao2025decoupled}.
-Graph-based representations have also been introduced for video-based depression recognition, suggesting that structural relations may provide useful information beyond  sequential features~\cite{xu2025twostage}. 
-For instance, temporal graph neural networks have been used to model non-contiguous spatiotemporal dependencies in facial behavior~\cite{model:MSI-Net}. 
-However, these methods mainly focus on temporal encoding or multimodal integration, while facial action-related organization of landmarks  remains insufficiently explored. 
-In particular, facial landmarks are often treated as coordinate sequences, visual features, or generic spatio-temporal inputs, rather than as structured action-related representations.
+We propose AFGNN, an Action Unit-informed Facial-Audio Graph Network for vlog-based depression detection. The framework organizes facial landmarks into an AU-informed spatio-temporal graph, where intra-frame topology edges connect landmarks within facial action-related regions and inter-frame temporal edges capture landmark motion, and represents acoustic descriptors as an audio temporal graph. The two graphs are encoded by lightweight graph attention branches and integrated through bidirectional graph-level cross-modal gating~\cite{li2025avsgnn}, yielding a structured representation that combines facial action-related topology, landmark motion, acoustic continuity, and cross-modal interaction.
 
-This issue is particularly important for geometry-based facial representation. Facial landmarks are not isolated coordinate points but are organized around facial action-related regions, including the eyebrows, eyes, nose, mouth, and facial contour. 
-These regions are closely associated with local facial actions described by the Facial Action Coding System (FACS), in which Action Units provide a standard description of visible facial muscle movements~\cite{ekman1978facs,baltrusaitis2016openface,baltrusaitis2018openface}.  
-Recent work has also explored statistically significant Action Units as covariates to guide graph attention for depression recognition~\cite{zhao2026covariate}.
-In vlog-based depression datasets, explicit AU annotations or AU intensity labels are often unavailable. Accordingly, this work adopts an AU-informed rather than AU-annotated graph design. The proposed graph does not use AU labels as supervision; instead, it organizes landmark positions and motion according to facial action-related regions, forming a structured representation of facial topology and temporal movement.
-
-
-\begin{figure*}[t!]
+\begin{figure*}[!t]
 \centering
-\includegraphics[width=0.80\textwidth]{Framework.png} 
-\caption{Overall framework of AFGNN. Facial landmarks are represented as an AU-informed spatio-temporal facial graph with facial-topology edges, temporal edges, region-aware node features, and self-loops. Acoustic descriptors are represented as an audio temporal graph. The two graphs are encoded by lightweight GAT branches and integrated through bidirectional graph-level cross-modal gating for depression prediction.}
+\includegraphics[width=0.70\textwidth]{Framework.png}
+\caption{Overall framework of AFGNN. Facial landmarks are represented as an AU-informed spatio-temporal facial graph and acoustic descriptors as an audio temporal graph; the two graphs are encoded by lightweight GAT branches and integrated through bidirectional graph-level cross-modal gating.}
 \label{fig:framework}
 \end{figure*}
-
-Graph networks provide a natural way to model such structured facial representations by treating landmarks as nodes and spatial-temporal relations as edges. Prior studies on facial expression recognition and AU recognition have shown that graph-based relational reasoning is useful for modeling dependencies among facial regions, landmarks, or action units~\cite{song2021uncertain,ge2024mgrr,liao2022fergcn}. However, these studies mainly target facial expression or AU recognition rather than vlog-based depression detection. In this task, facial actions are often subtle, temporally evolving, and coupled with acoustic behavior. 
-Therefore, an effective representation should jointly encode AU-informed facial topology, landmark motion, and acoustic information, as also explored by recent audio-visual graph learning frameworks~\cite{li2025avsgnn}. This motivates a unified facial-audio graph network that combines facial-topology structure, temporal facial dynamics, and audio temporal relations.
-
-To address these issues, we propose AFGNN, an Action Unit-informed Facial-Audio Graph Network for vlog-based depression detection. The proposed framework organizes facial landmarks into an AU-informed spatio-temporal facial graph, where intra-frame facial-topology edges encode local relations within facial action-related regions and inter-frame temporal edges capture landmark motion. Acoustic descriptors are represented as an audio temporal graph to model short-term acoustic continuity. The facial and audio graphs are encoded by lightweight graph attention branches and integrated through bidirectional graph-level cross-modal gating. This design provides a structured representation that combines facial action-related topology, landmark motion, acoustic temporal relations, and cross-modal interaction.
 
 The main contributions of this work are summarized as follows:
 
@@ -91,40 +79,27 @@ The main contributions of this work are summarized as follows:
 
 \item The proposed framework constructs an AU-informed spatio-temporal facial graph and an audio temporal graph, and integrates them through bidirectional graph-level cross-modal gating.
 
-
-\item Experiments on D-Vlog, conducted with a five-seed evaluation protocol, show that the proposed method achieves an F1-score of 0.788 and an AUC of 0.799, and remains superior to a strong Mamba-based baseline re-implemented under the identical official split. Cross-dataset experiments on LMVD and ablation studies further examine the generalizability of the framework and the contribution of each design choice.
+\item Under a five-seed protocol on D-Vlog, AFGNN achieves an F1-score of 0.788 and an AUC of 0.799, outperforming a strong Mamba-based baseline re-implemented under the identical official split; cross-dataset experiments on LMVD and ablation studies further examine generalizability and design choices.
 \end{itemize}
 
 
 \section{AU-Informed Facial-Audio Graph Network}
 \label{sec:method}
-This section presents the proposed AU-informed facial-audio graph network. We first describe the overall architecture, then introduce facial and audio graph construction, and finally present graph encoding and graph-level cross-modal gating.
 
 \subsection{Overall Framework}
 
-As shown in Fig.~\ref{fig:framework}, each vlog sample is represented by a facial landmark sequence and an acoustic descriptor sequence,
-\begin{equation}
-P \in \mathbb{R}^{T_v \times 68 \times 2}, \quad
-A \in \mathbb{R}^{T_a \times d_a},
-\end{equation}
-where \(T_v\) and \(T_a\) denote the visual and acoustic sequence lengths, respectively, and \(d_a=25\) in our implementation. The objective is to predict a binary depression label \(y \in \{0,1\}\).
-
-The proposed framework maps the two input sequences into an AU-informed spatio-temporal facial graph and an audio temporal graph,
-\begin{equation}
-G_f = (V_f, E_f, X_f), \quad
-G_a = (V_a, E_a, X_a),
-\end{equation}
-where \(V_m\), \(E_m\), and \(X_m\) denote the nodes, edges, and node features of modality \(m \in \{f,a\}\). After modality-specific graph attention encoding and graph-level cross-modal gating, the final prediction is obtained as
-\begin{equation}
-z = [\tilde{h}_f; \tilde{h}_a], \quad
-\hat{y} = \sigma(\mathrm{MLP}(z)),
-\end{equation}
-where \(\tilde{h}_f\) and \(\tilde{h}_a\) denote the gated facial and audio graph-level representations.
-
+As shown in Fig.~\ref{fig:framework}, each vlog sample is represented by a facial landmark sequence \(P \in \mathbb{R}^{T_v \times 68 \times 2}\) and an acoustic descriptor sequence \(A \in \mathbb{R}^{T_a \times 25}\), and the goal is to predict a binary depression label \(y \in \{0,1\}\). The framework maps the two sequences into an AU-informed spatio-temporal facial graph \(G_f = (V_f, E_f, X_f)\) and an audio temporal graph \(G_a = (V_a, E_a, X_a)\), where \(V_m\), \(E_m\), and \(X_m\) denote the nodes, edges, and node features of modality \(m \in \{f,a\}\). After modality-specific graph attention encoding and graph-level cross-modal gating, the prediction is \(\hat{y} = \sigma(\mathrm{MLP}([\tilde{h}_f; \tilde{h}_a]))\), where \(\tilde{h}_f\) and \(\tilde{h}_a\) denote the gated facial and audio graph-level representations.
 
 \subsection{Facial and Audio Graph Construction}
 
-The facial graph is constructed from sampled landmark coordinates. Each node \(v^f_{i,t} \in V_f\) represents landmark \(i\) at visual frame \(t\). Its feature vector concatenates landmark position, frame-wise displacement, and facial-region identity
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.58\textwidth]{Face graph.png}
+\caption{AU-informed facial graph construction. (a) The 68-point landmark topology overlaid on the face, colored by facial action-related region. (b) Temporal edges connect the same landmark across consecutive frames.}
+\label{fig:face_graph}
+\end{figure*}
+
+Each facial node \(v^f_{i,t} \in V_f\) represents landmark \(i\) at visual frame \(t\), with a feature vector concatenating landmark position, frame-wise displacement, and facial-region identity
 \begin{equation}
 x^f_{i,t} = [p_{i,t}; \Delta p_{i,t}; r_i], \quad
 \Delta p_{i,t} =
@@ -133,69 +108,25 @@ p_{i,t} - p_{i,t-1}, & t > 1, \\
 0, & t = 1,
 \end{cases}
 \end{equation}
-where \(p_{i,t} \in \mathbb{R}^{2}\) denotes the landmark coordinate and \(r_i \in \{0,1\}^{9}\) denotes the facial-region identity of landmark \(i\), giving \(x^f_{i,t} \in \mathbb{R}^{13}\). The nine regions include the face contour, left eyebrow, right eyebrow, nose bridge, nose bottom, left eye, right eye, outer mouth, and inner mouth. Thus, \(|V_f| = 68T_v\) and \(X_f \in \mathbb{R}^{68T_v \times 13}\).
+where \(p_{i,t} \in \mathbb{R}^{2}\) denotes the landmark coordinate and \(r_i \in \{0,1\}^{9}\) the facial-region identity, giving \(x^f_{i,t} \in \mathbb{R}^{13}\). The nine regions cover the face contour, eyebrows, nose bridge and bottom, eyes, and outer and inner mouth. Thus, \(|V_f| = 68T_v\) and \(X_f \in \mathbb{R}^{68T_v \times 13}\).
 
-The facial edge set consists of intra-frame facial-topology edges, inter-frame temporal edges, and self-loops
-\begin{equation}
-E_f = E_{\mathrm{top}} \cup E_{\mathrm{temp}} \cup E_{\mathrm{self}}.
-\end{equation}
-The facial-topology edges \(E_{\mathrm{top}}\) are derived from the standard 68-point landmark layout. They connect adjacent landmarks within facial action-related regions, using chain connections for open components and ring connections for closed components. The temporal edges connect the same landmark across consecutive frames, and self-loops preserve node-specific information during message passing
-\begin{equation}
-E_{\mathrm{temp}} =
-\{(v^f_{i,t}, v^f_{i,t+1}), (v^f_{i,t+1}, v^f_{i,t})\},
-\quad
-E_{\mathrm{self}} = \{(v^f_{i,t}, v^f_{i,t})\}.
-\end{equation}
-Here, \(E_{\mathrm{temp}}\) is defined for \(i=1,\ldots,68\) and \(t=1,\ldots,T_v-1\), while \(E_{\mathrm{self}}\) is defined for all facial nodes. This construction yields an AU-informed spatio-temporal facial graph that organizes landmark motion according to facial action-related topology without requiring AU annotations.
+The facial edge set \(E_f = E_{\mathrm{top}} \cup E_{\mathrm{temp}} \cup E_{\mathrm{self}}\) consists of intra-frame topology edges, inter-frame temporal edges, and self-loops. The topology edges \(E_{\mathrm{top}}\) are derived from the standard 68-point landmark layout and connect adjacent landmarks within facial action-related regions, using chain connections for open components and ring connections for closed components, as illustrated in Fig.~\ref{fig:face_graph}. The temporal edges \(E_{\mathrm{temp}}\) connect each landmark to itself across consecutive frames, and the self-loops \(E_{\mathrm{self}}\) preserve node-specific information during message passing. This construction organizes landmark motion according to facial action-related topology without requiring AU annotations.
 
-The audio graph is constructed from sampled acoustic descriptors. Each node \(v^a_t \in V_a\) corresponds to one acoustic frame, and its feature is the standardized acoustic descriptor
-\begin{equation}
-x^a_t = \tilde{a}_t = \frac{a_t - \mu}{\sigma + \epsilon}, \quad
-X_a \in \mathbb{R}^{T_a \times d_a},
-\end{equation}
-where \(\mu,\sigma \in \mathbb{R}^{d_a}\) are computed from the training set and applied to the validation and test sets. The audio edge set is defined as a bidirectional temporal chain
-\begin{equation}
-E_a =
-\{(v^a_t, v^a_{t+1}), (v^a_{t+1}, v^a_t)
-\mid t = 1,\ldots,T_a-1\}.
-\end{equation}
-This lightweight structure models short-term temporal continuity among acoustic descriptors. 
-
-
-
-
-
-
-
-
-
-
+Each audio node \(v^a_t \in V_a\) corresponds to one acoustic frame, whose feature is the standardized descriptor \(x^a_t = (a_t - \mu)/(\sigma + \epsilon)\), where \(\mu,\sigma \in \mathbb{R}^{25}\) are training-set statistics applied to all splits. The audio edges form a bidirectional temporal chain between adjacent frames, modeling short-term acoustic continuity.
 
 \subsection{Graph Encoding and Gated Fusion}
 
-The facial and audio graphs are encoded by modality-specific graph attention branches:
-\begin{equation}
-\mathbf{H}_m = \mathrm{GAT}_m(G_m)
-= \{\mathbf{h}^m_u \mid u \in V_m\}, \quad
-\mathbf{h}^m_u \in \mathbb{R}^{d_m}.
-\end{equation}
-Here, \(h^m_u\) denotes the node representation of node \(u\) in modality \(m\in \{f,a\}\).
-
-A gated readout is then used to aggregate node representations into a graph-level embedding. For each node \(u\), a modality-specific gate network produces an unnormalized score, which is normalized over all nodes in the graph
+The facial and audio graphs are encoded by modality-specific graph attention branches, \(\mathbf{H}_m = \mathrm{GAT}_m(G_m)\), producing node representations \(h^m_u \in \mathbb{R}^{d_m}\) for each node \(u \in V_m\). A gated readout then aggregates the node representations into a graph-level embedding,
 \begin{equation}
 \beta^m_u =
 \frac{\exp(g_m(h^m_u))}
 {\sum_{v \in V_m}\exp(g_m(h^m_v))},
 \quad
-h_m = \sum_{u \in V_m} \beta^m_u h^m_u .
+h_m = \sum_{u \in V_m} \beta^m_u h^m_u ,
 \end{equation}
-where \(\beta^m_u\) denotes the readout weight of node \(u\), and \(h_m\) is the graph-level embedding of modality \(m\).
+where \(g_m\) is a modality-specific gate network producing an unnormalized score per node, \(\beta^m_u\) is the normalized readout weight, and \(h_m\) is the graph-level embedding of modality \(m\).
 
-Since each modality is summarized into a single graph-level embedding, the proposed framework adopts graph-level gating rather than token-level cross-attention. For \(m \in \{f,a\}\), let
-\begin{equation}
-q_m = W^m_q h_m, \quad k_m = W^m_k h_m .
-\end{equation}
-The directional gates and residual updates are defined as
+Since each modality is summarized into a single graph-level embedding, the framework adopts graph-level gating rather than token-level cross-attention. With \(q_m = W^m_q h_m\) and \(k_m = W^m_k h_m\), which share a common projection dimension \(d_g\), the directional gates and residual updates are
 \begin{equation}
 g_{f \leftarrow a}
 =
@@ -212,98 +143,87 @@ g_{a \leftarrow f}
 \quad
 \tilde{h}_a
 =
-h_a + g_{a \leftarrow f} W^{f \rightarrow a}_v h_f .
+h_a + g_{a \leftarrow f} W^{f \rightarrow a}_v h_f ,
 \end{equation}
-Here, \(W^{a \rightarrow f}_v \in \mathbb{R}^{d_f \times d_a}\) and
-\(W^{f \rightarrow a}_v \in \mathbb{R}^{d_a \times d_f}\) project the graph-level embedding of one modality into the feature space of the other modality before residual updating, and \(\sigma\) denotes the sigmoid function. In plain terms, \(g_{f \leftarrow a} \in (0,1)\) is a scalar gate that controls how much audio information is injected into the facial representation, and \(g_{a \leftarrow f}\) plays the symmetric role for the audio representation.
+where \(W^{a \rightarrow f}_v \in \mathbb{R}^{d_f \times d_a}\) and \(W^{f \rightarrow a}_v \in \mathbb{R}^{d_a \times d_f}\) project one modality's graph-level embedding into the other's hidden feature space, and \(\sigma\) denotes the sigmoid function. In plain terms, \(g_{f \leftarrow a} \in (0,1)\) is a scalar gate controlling how much audio information is injected into the facial representation, and \(g_{a \leftarrow f}\) plays the symmetric role.
 
-The model is optimized with focal loss
-\begin{equation}
-\mathcal{L}_{\mathrm{focal}}
-=
--\alpha_t(1-p_t)^\gamma \log(p_t),
-\end{equation}
-\begin{equation}
-p_t = y\hat{y} + (1-y)(1-\hat{y}),
-\quad
-\alpha_t = \alpha y + (1-\alpha)(1-y),
-\end{equation}
-where \(p_t\) is the predicted probability of the ground-truth class. We set \(\alpha=0.25\) and \(\gamma=2\). The validation set is used for checkpoint selection and decision-threshold determination.
-
-During inference, \(K\) independently trained models are averaged at the probability level 
-$\hat{y}_{\mathrm{ens}}
-=
-\frac{1}{K}
-\sum_{k=1}^{K} \hat{y}^{(k)} .
-$
-% \begin{equation}
-% \hat{y}_{\mathrm{ens}}
-% =
-% \frac{1}{K}
-% \sum_{k=1}^{K} \hat{y}^{(k)} .
-% \end{equation}
-In this work, \(K=5\) for final ensemble inference, corresponding to the full set of random seeds used in our stability protocol rather than a tuned hyper-parameter; the decision threshold of the averaged probability is selected on the validation set by F1-score.
-
-
-
-
-
+The model is optimized with focal loss \(\mathcal{L}_{\mathrm{focal}} = -\alpha_t(1-p_t)^\gamma \log(p_t)\), where \(p_t\) is the predicted probability of the ground-truth class and \(\alpha_t = \alpha y + (1-\alpha)(1-y)\); we set \(\alpha=0.25\) and \(\gamma=2\). At inference, \(K\) independently trained models are averaged at the probability level. We set \(K=5\), corresponding to the full seed set of our stability protocol rather than a tuned hyper-parameter, and select the decision threshold of the averaged probability on the validation set by F1-score.
 
 \section{Experiments}
 \label{sec:experiments}
-This section evaluates the proposed framework through comparison with existing reported methods, cross-dataset evaluation, robustness and subgroup analysis, ablation studies, and visualization-based analysis. The evaluation examines the effects of graph construction, modality combination, gated fusion, and inference design.
 
 \subsection{Experimental Setup}
+\label{sec:setup}
 
-Experiments are conducted on the public D-Vlog dataset~\cite{yoon2022dvlog}, which contains 961 vlogs from 816 individuals, including 555 depressed samples and 406 control samples. Following the official split, the dataset is divided into 647 training samples (375 depressed / 272 control), 102 validation samples (57 / 45), and 212 test samples (123 / 89) with a ratio of 7:1:2. We verified that the official split is subject-disjoint: none of the 816 channel identities appears in more than one split.
+Experiments are conducted on the public D-Vlog dataset~\cite{yoon2022dvlog}, which contains 961 vlogs from 816 individuals (555 depressed / 406 control). Following the official split, the dataset is divided into 647 training (375 / 272), 102 validation (57 / 45), and 212 test (123 / 89) samples with a ratio of 7:1:2; we verified that the official split is subject-disjoint (no channel identity spans two splits). Each sample provides 68 facial landmarks and 25-dimensional openSMILE descriptors; samples with failed face detection are retained with zero-filled landmark features rather than discarded, so that the audio branch remains usable, and no raw facial pixels or identifiable facial images are processed. Performance is evaluated using Accuracy, Precision, Recall, F1-score, and Area Under the ROC Curve; the held-out test set is used only for final evaluation, while the validation set is used for checkpoint selection and threshold calibration.
 
-Each sample is represented by pre-extracted facial landmarks and acoustic descriptors. The visual input consists of 68 facial landmarks, and the acoustic input consists of 25-dimensional openSMILE descriptors. Samples for which face detection fails are retained with zero-filled landmark features rather than discarded, so that the audio branch remains usable. Since the proposed framework uses only landmark coordinates and acoustic descriptors, no raw facial pixels or identifiable facial images are processed in this study. Performance is evaluated using Accuracy, Precision, Recall, F1-score, and Area Under the ROC Curve. The held-out test set is used only for final evaluation, while the validation set is used for checkpoint selection and threshold calibration.
-
-All experiments are implemented with PyTorch Geometric~\cite{fey2019fast}. The facial graph uses \(T_v=32\) sampled visual frames, and the audio graph uses \(T_a=32\) acoustic frames. The facial GAT branch contains three layers with hidden dimension 128 and four attention heads, while the audio GAT branch contains two layers with hidden dimension 64 and four attention heads. Dropout is set to 0.3. The framework is trained with Adam using a learning rate of \(10^{-3}\), weight decay of \(10^{-4}\), and a batch size of 32. Training lasts up to 100 epochs, with early stopping based on validation AUC and a patience of 15 epochs. A ReduceLROnPlateau scheduler reduces the learning rate by a factor of 0.5 if validation AUC does not improve for 5 consecutive epochs, and gradient clipping is applied with a maximum norm of 1.0. The final model contains approximately \(1.2 \times 10^5\) trainable parameters.
-
-Unless otherwise specified, all results are reported over five independently trained models with random seeds 42--46 (mean $\pm$ standard deviation), and ablation results use single models without ensemble inference. The final test result is obtained by averaging the five models at the probability level.
+The framework is implemented with PyTorch Geometric~\cite{fey2019fast}. The facial graph uses \(T_v=32\) sampled visual frames and the audio graph \(T_a=32\) acoustic frames. The facial GAT branch contains three layers with hidden dimension 128 and four attention heads, the audio GAT branch two layers with hidden dimension 64 and four heads, and dropout is 0.3; the model contains approximately \(1.2 \times 10^5\) trainable parameters. The main configuration is trained with AdamW (learning rate \(10^{-3}\), weight decay \(10^{-3}\)), cosine-annealing scheduling, and focal loss, for up to 100 epochs with early stopping on validation AUC (patience 15) and gradient clipping at norm 1.0. Unless otherwise specified, all results are reported over five independently trained models with seeds 42--46 (mean $\pm$ standard deviation), ablation results use single models, and the final test result averages the five models at the probability level. Two earlier training recipes appear only in clearly marked ablation rows: the component-ablation family (Table~\ref{tab:face_ablation}) uses Adam (weight decay \(10^{-4}\)) with ReduceLROnPlateau scheduling and focal loss, and the rows marked \(^\ddagger\) in Table~\ref{tab:fusion_design} additionally replace focal loss with weighted BCE. The component ablations are compared against their own within-recipe full model, whereas the \(^\ddagger\) rows differ from the main configuration in the training recipe as well and therefore serve as descriptive comparisons only.
 
 \subsection{Comparison with Existing Methods}
 
-Table~\ref{tab:comparison} compares the proposed method with existing methods reported on D-Vlog. The proposed method achieves the highest F1-score (0.788) and recall (0.878) among the listed methods, and also yields the best AUC (0.799) among methods with reported or reproduced AUC values. High recall is particularly desirable for depression screening, where a missed case is typically more costly than a false alarm, and the moderate precision reflects this screening-oriented trade-off.
+Table~\ref{tab:comparison} compares the proposed method with existing methods reported on D-Vlog. The proposed method achieves the highest F1-score (0.789 single model, 0.788 ensemble) and the highest recall (0.878) among the listed methods, and also yields the best AUC (0.799) among methods with reported or reproduced AUC values. High recall is particularly desirable for depression screening, where a missed case is typically more costly than a false alarm, and the moderate precision reflects this screening-oriented trade-off.
 
-It should be noted that the reported results are not always obtained under identical evaluation protocols: some methods use five-fold cross-validation, whereas this study follows the official split, so the cited figures serve as a reference against reported D-Vlog results. For a controlled comparison, we additionally re-ran DepMamba~\cite{model:DepMamba}, the strongest publicly available audio-visual baseline, using its official implementation and hyper-parameters under the identical official split (last two rows of Table~\ref{tab:comparison}). Under this protocol, AFGNN outperforms the re-run DepMamba by a clear margin in both its single-model and ensemble forms, and a single AFGNN model already surpasses the five-seed DepMamba ensemble.
+These cited figures are obtained under heterogeneous evaluation protocols (some methods use five-fold cross-validation, whereas this study follows the official split) and serve as reference points rather than strictly controlled comparisons. For a controlled comparison, we additionally re-ran DepMamba~\cite{model:DepMamba}, the strongest publicly available audio-visual baseline, using its official implementation and hyper-parameters under the identical official split (the DepMamba$^\dagger$ rows of Table~\ref{tab:comparison}). Under this protocol, AFGNN outperforms the re-run DepMamba by a clear margin in both its single-model and ensemble forms, and a single AFGNN model already surpasses the five-seed DepMamba ensemble.
 
-
-
-
-\begin{table}[t]
+\begin{table}[!t]
 \centering
-\caption{Comparison with existing methods reported on D-Vlog. $^\dagger$Re-run with the official implementation under the identical official split (five seeds, mean$\pm$std).}
+\caption{Comparison with existing methods reported on D-Vlog. $^\dagger$Re-run under the identical official split (five seeds, mean$\pm$std).}
 \label{tab:comparison}
 \scriptsize
-\setlength{\tabcolsep}{2pt}
+\setlength{\tabcolsep}{1.5pt}
 \begin{tabular}{lccccc}
 \hline
 Method & Acc & Prec & Rec & F1 & AUC \\
 \hline
 TAMFN~\cite{model:TAMFN} & -- & 0.6602 & 0.6650 & 0.6582 & -- \\
 STST~\cite{model:STST} & 0.7070 & 0.7250 & 0.7767 & 0.7500 & -- \\
-MDAVIF~\cite{model:MDAVIF} & -- & 0.7425 & 0.7600 & 0.7525 & -- \\
 DepMamba~\cite{model:DepMamba} & 0.6887 & 0.6819 & 0.8699 & 0.7644 & -- \\
 AttMamba~\cite{model:AttMamba} & 0.6940 & 0.7029 & 0.8066 & 0.7552 & -- \\
-DepMSTAT~\cite{tao2024depmstat} & -- & 0.7153 & 0.7560 & 0.7351 & -- \\
 ASYM~\cite{model:ASYM} & \textbf{0.7468} & 0.7387 & 0.7619 & 0.7490 & -- \\
 MSTGT~\cite{model:MSTGT} & 0.7138 & 0.7247 & 0.8428 & 0.7681 & -- \\
 MSI-Net~\cite{model:MSI-Net} & 0.7025 & \textbf{0.7891} & 0.6963 & 0.7391 & -- \\
 \hline
 DepMamba$^\dagger$ & 0.680{\scriptsize$\pm$.023} & 0.694{\scriptsize$\pm$.042} & 0.815{\scriptsize$\pm$.062} & 0.747{\scriptsize$\pm$.011} & 0.748{\scriptsize$\pm$.014} \\
 DepMamba$^\dagger$ (ens.) & 0.698 & 0.698 & 0.846 & 0.765 & 0.772 \\
-AFGNN (Ours, sgl.) & 0.734{\scriptsize$\pm$.010} & 0.731{\scriptsize$\pm$.015} & 0.857{\scriptsize$\pm$.032} & 0.789{\scriptsize$\pm$.010} & 0.788{\scriptsize$\pm$.009} \\
-AFGNN (Ours, ens.) & 0.726 & 0.715 & \textbf{0.878} & \textbf{0.788} & \textbf{0.799} \\
+AFGNN (Ours, sgl.) & 0.734{\scriptsize$\pm$.010} & 0.731{\scriptsize$\pm$.015} & 0.857{\scriptsize$\pm$.032} & \textbf{0.789}{\scriptsize$\pm$.010} & 0.788{\scriptsize$\pm$.009} \\
+AFGNN (Ours, ens.) & 0.726 & 0.715 & \textbf{0.878} & 0.788 & \textbf{0.799} \\
 \hline
 \end{tabular}
 \end{table}
 
+\subsection{Cross-Dataset Evaluation on LMVD}
 
-\begin{table}[t]
+To examine generalizability beyond D-Vlog, we train and evaluate AFGNN on LMVD~\cite{he2024lmvd} (1{,}823 vlogs; 908 depressed / 915 control) under a stratified 70/10/20 video-level split (1{,}276/182/365 samples; LMVD releases no subject identities, so video-level splitting is used), carrying over the entire model configuration and all hyper-parameters from D-Vlog and adapting only the audio input dimension to LMVD's 128-dimensional VGGish descriptors. For reference, MDDformer~\cite{he2024lmvd} reports a weighted F1 of 0.7685 on LMVD under ten-fold cross-validation, which is not directly comparable to our held-out split.
+
+Table~\ref{tab:lmvd} reports the results. Without any dataset-specific tuning, AFGNN reaches an AUC of 0.787$\pm$0.004 on LMVD, matching its D-Vlog performance (0.788$\pm$0.009) with even lower seed variance. Separately, we test zero-shot transfer of the D-Vlog-trained \emph{face-only} model to the LMVD test set with its D-Vlog-calibrated threshold: it retains an AUC of 0.602 (vs.\ 0.640 in-domain) and a recall of 0.906, suggesting that the learned facial-graph cues transfer across domains without collapse, although in-domain training is clearly beneficial.
+
+\begin{table}[!t]
 \centering
-\caption{Component-level ablation on facial graph structure (five seeds, mean$\pm$std), keeping the audio branch and gated fusion unchanged. Rows use the ablation training configuration; the main-configuration full model reports F1 0.789$\pm$0.010 / AUC 0.788$\pm$0.009, within seed variance.}
+\caption{Cross-dataset evaluation on LMVD (five seeds, mean$\pm$std). ``Zero-shot'': D-Vlog-trained face-only model (single seed) applied without retraining.}
+\label{tab:lmvd}
+\scriptsize
+\setlength{\tabcolsep}{1.2pt}
+\begin{tabular}{lccccc}
+\toprule[1.2pt]
+Setting & Acc & Prec & Rec & F1 & AUC \\
+\midrule[0.8pt]
+AFGNN (within) & 0.696{\scriptsize$\pm$.027} & 0.665{\scriptsize$\pm$.056} & 0.812{\scriptsize$\pm$.102} & 0.725{\scriptsize$\pm$.021} & 0.787{\scriptsize$\pm$.004} \\
+AFGNN (zero-shot) & 0.581 & 0.547 & 0.906 & 0.682 & 0.602 \\
+\bottomrule[1.2pt]
+\end{tabular}
+\end{table}
+
+\subsection{Robustness and Subgroup Analysis}
+
+We probe robustness at inference time using the five full-model checkpoints. To simulate face-detection failure, the facial features of a random fraction of frames are zeroed: masking 10\% or 25\% of frames barely affects performance (AUC 0.784 and 0.779 vs.\ 0.788 clean), degradation remains graceful at 50\% (AUC 0.740), and even with all facial input removed the audio branch alone sustains an F1-score of 0.728. Adding Gaussian noise at the per-sample acoustic standard deviation reduces the AUC by only 0.012. We further report subgroup point estimates (female $n=146$: F1 0.775 / AUC 0.788; male $n=66$: F1 0.814 / AUC 0.795) without claiming significance at this sample size, and aggregating probabilities over the 179 test subjects yields consistent subject-level results (F1 0.774 / AUC 0.797).
+
+\subsection{Ablation Study}
+
+We ablate facial graph structure (Table~\ref{tab:face_ablation}) and modality, fusion, and training design (Table~\ref{tab:fusion_design}); region-masking results are summarized in text.
+
+\begin{table}[!t]
+\centering
+\caption{Component-level ablation of the facial graph (five seeds, mean$\pm$std; ablation recipe, Sec.~\ref{sec:setup}), keeping the audio branch and gated fusion unchanged. Differences are computed against the within-recipe full model.}
 \label{tab:face_ablation}
 \scriptsize
 \setlength{\tabcolsep}{6pt}
@@ -326,197 +246,46 @@ Motion-based edges $(k=2)$ & 0.781{\scriptsize$\pm$.015} & 0.779{\scriptsize$\pm
 \end{tabular}
 \end{table}
 
-
-
-% \begin{table}[t]
-% \centering
-% \caption{Component-level ablation on facial graph structure. All variants keep the audio branch and graph-level gated fusion unchanged. The
-% full model uses facial-topology edges, temporal edges,facial-region encoding, velocity features, and self-loops.}
-% \label{tab:graph_ablation}
-% \small
-% \begin{tabular}{lcc}
-% \toprule[1.2pt]
-% Facegraphconfiguration&F1&AUC\\
-% \midrule[0.8pt]
-% Full(Topology+Temporal+Region+Velocity+Self-loop)&\textbf{0.794}&\textbf{0.802}\\
-% \midrule[0.8pt]
-% Topology edges&0.786&0.792\\
-% Temporaledges&0.748&0.763\\
-% Regionone-hot&0.789&0.786\\
-% Velocity$[dx,dy]$&0.752&0.760\\
-% Self-loop&0.748&0.778\\
-% \midrule[0.8pt]
-% Static+Temporal+Dynamic($k$=1)&0.714&0.672\\
-% Motion+Region($k$=2)&0.709&0.664\\
-% \bottomrule[1.2pt]
-% \end{tabular}
-% \end{table}
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.70\textwidth]{Face graph.png}
-\caption{AU-informed facial graph construction. (a) The 68-point landmark topology overlaid on the face, colored by facial action-related region. (b) Temporal edges connect the same landmark across consecutive frames.}
-\label{fig:face_graph}
-\end{figure*}
-
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.70\linewidth]{Audio graph.png}
-\caption{Audio graph construction. (a) Frame-level acoustic feature sequence. (b) The temporal chain graph connects adjacent time frames bidirectionally. (c) Example readout weights; higher weights indicate frames that contribute more strongly to the graph-level audio representation.}
-\label{fig:audio_graph}
-\end{figure*}
-
-
-
-
-\subsection{Cross-Dataset Evaluation on LMVD}
-
-To examine generalizability beyond D-Vlog, we evaluate the framework on LMVD~\cite{he2024lmvd} (1{,}823 vlogs; 908 depressed / 915 control). Since LMVD has no official split, we adopt a stratified 70/10/20 train/validation/test split (1{,}276/182/365 samples). LMVD provides OpenFace landmarks and 128-dimensional VGGish acoustic descriptors; we keep the entire model configuration and all hyper-parameters tuned on D-Vlog unchanged, adapting only the input dimension of the audio branch to the VGGish descriptors.
-
-Table~\ref{tab:lmvd} reports the results. Without any dataset-specific tuning, AFGNN reaches an AUC of 0.787$\pm$0.004 on LMVD, matching its D-Vlog performance (0.788$\pm$0.009) with even lower seed variance. For reference, MDDformer~\cite{he2024lmvd} reports a weighted F1 of 0.7685 under ten-fold cross-validation, which is not directly comparable to our held-out split. In the zero-shot setting, the D-Vlog-trained face-only model is applied to the LMVD test set with its D-Vlog-calibrated threshold: it retains an AUC of 0.602 (vs.\ 0.640 in-domain) and a recall of 0.906, indicating that the learned facial-graph cues transfer across domains without collapse, although in-domain training is clearly beneficial.
-
-\begin{table}[t]
-\centering
-\caption{Cross-dataset evaluation on LMVD. $^\ddagger$Ten-fold cross-validation with weighted metrics, not directly comparable. ``Zero-shot'' applies the D-Vlog-trained face-only model to LMVD without retraining.}
-\label{tab:lmvd}
-\scriptsize
-\setlength{\tabcolsep}{1.2pt}
-\begin{tabular}{lccccc}
-\toprule[1.2pt]
-Setting & Acc & Prec & Rec & F1 & AUC \\
-\midrule[0.8pt]
-MDDformer$^\ddagger$ & 0.7688 & -- & -- & 0.7685 & -- \\
-\midrule[0.8pt]
-AFGNN (within) & 0.696{\scriptsize$\pm$.027} & 0.665{\scriptsize$\pm$.056} & 0.812{\scriptsize$\pm$.102} & 0.725{\scriptsize$\pm$.021} & 0.787{\scriptsize$\pm$.004} \\
-AFGNN (zero-shot) & 0.581 & 0.547 & 0.906 & 0.682 & 0.602 \\
-\bottomrule[1.2pt]
-\end{tabular}
-\end{table}
-
-\subsection{Robustness and Subgroup Analysis}
-
-We further probe robustness at inference time using the five full-model checkpoints. To simulate face-detection failure, the facial features of a random fraction of frames are zeroed: masking 10\% or 25\% of frames barely affects performance (AUC 0.784 and 0.779 vs.\ 0.788 clean), degradation remains graceful at 50\% (AUC 0.740), and even with all facial input removed the audio branch alone sustains an F1-score of 0.728. Adding Gaussian noise with standard deviation equal to that of each sample's acoustic features reduces the AUC by only 0.012. Performance is also stable across genders (female $n=146$: F1 0.775 / AUC 0.788; male $n=66$: F1 0.814 / AUC 0.795), and aggregating probabilities over the 179 test subjects yields consistent subject-level results (F1 0.774 / AUC 0.797).
-
-
-\subsection{Ablation Study}
-
-Ablation studies are conducted to examine how the main components of the proposed framework contribute to performance. The analysis covers four aspects: facial graph structure, modality contribution and gated fusion, training and inference design, and facial-region sensitivity. The numerical results are reported in Tables~\ref{tab:face_ablation}--\ref{tab:region_ablation}.
-
 \textit{Graph structure.}
-Table~\ref{tab:face_ablation} evaluates the contribution of facial graph components while keeping the audio branch and graph-level gated fusion unchanged. For the dynamic graph baselines, frame-level \(k\)-nearest-neighbor edges are added to the facial graph:
-\begin{equation}
-\mathcal{N}^{\mathrm{dyn}}_k(v^f_{i,t})
-=
-\mathrm{TopK}_{j \ne i}\,
-\mathrm{sim}(s_{i,t}, s_{j,t}),
-\end{equation}
-where \(\mathrm{TopK}\) selects the \(k\) landmarks with the highest similarity scores, \(\mathrm{sim}(\cdot,\cdot)\) denotes cosine similarity, and \(s_{i,t}\) is set to \(x^f_{i,t}\) for feature-similarity graphs and to \(\Delta p_{i,t}\) for motion-consistency graphs. These dynamic edges are used only for ablation and are not included in the final configuration.
-
-Under the five-seed protocol, removing any single facial-graph component changes the mean F1-score by at most 0.019 (self-loops) and the mean AUC by at most 0.007, and paired Wilcoxon signed-rank tests against the full model show that no component removal reaches significance at the 0.05 level (the minimum attainable two-sided $p$ with five paired seeds is 0.0625). We therefore do not claim large gains from individual components at this dataset scale: the contribution of the AU-informed graph lies in its structured and privacy-friendly inductive bias rather than in any single edge type. Notably, the dynamic graph alternatives do not outperform the static AU-informed topology---feature-similarity edges ($k=1$) merely tie with it, and motion-consistency edges ($k=2$) are slightly worse---indicating that the anatomically motivated structure matches learned similarity neighborhoods at no extra cost.
+Table~\ref{tab:face_ablation} removes one facial-graph component at a time; the dynamic variants instead add per-frame \(k\)-nearest-neighbor edges connecting each landmark to its \(k\) most similar landmarks by cosine similarity of node features (\(k{=}1\)) or motion vectors (\(k{=}2\)). Relative to the within-recipe full model, removing any single component changes the mean F1-score by at most 0.019 (self-loops) and the mean AUC by at most 0.007, and paired Wilcoxon signed-rank tests detect no significant removal at the 0.05 level (the minimum attainable two-sided $p$ with five paired seeds is 0.0625). We therefore do not claim large gains from individual components at this dataset scale: the contribution of the AU-informed graph lies in its structured and privacy-friendly inductive bias rather than in any single edge type. Across five seeds, no statistically significant difference was detected between the static AU-informed topology and the tested dynamic variants, and we do not claim equivalence given the limited number of seeds.
 
 \textit{Modality and gated fusion.}
-Table~\ref{tab:fusion_ablation} evaluates the contribution of each modality and the effect of multimodal fusion. The audio-only model outperforms the face-only model (F1 0.748 vs.\ 0.712), indicating that acoustic descriptors carry stronger independent depression cues in vlogs, while the face-only model is no longer degenerate and still provides meaningful visual information (AUC 0.640). Combining the two modalities with simple concatenation already improves over either branch, and graph-level gated fusion further raises the F1-score from 0.780 to 0.789 and the AUC from 0.774 to 0.788. The audio-only model is the only ablation whose F1 drop against the full model is borderline significant (paired Wilcoxon $p=0.0625$, the minimum attainable with five seeds), supporting the complementarity of the two modalities.
+In Table~\ref{tab:fusion_design}, the audio-only model outperforms the face-only model (F1 0.748 vs.\ 0.712, both trained with the same recipe), indicating stronger independent acoustic cues in vlogs, while the face-only model is no longer degenerate (AUC 0.640). Within the main recipe, replacing graph-level gated fusion with simple concatenation lowers the F1-score from 0.789 to 0.780 and the AUC from 0.788 to 0.774, supporting the benefit of gating. Removing either modality degrades performance relative to the full model, although both variants use the earlier recipe, so the comparison is descriptive only.
 
 \textit{Audio length, loss, and ensemble.}
-Table~\ref{tab:design_ablation} examines several training and inference choices. The 32-frame audio setting performs better than both the 16-frame and 64-frame settings, indicating that a moderate acoustic context is more suitable for this task. Focal loss yields a higher F1-score and AUC than weighted BCE, suggesting a better precision--recall balance for the final classification setting. Ensemble inference with $K=5$ probability-averaged models improves the AUC from 0.788 (single-model mean) to 0.799 while keeping the F1-score at 0.788; the ensemble size is fixed to the full set of protocol seeds rather than tuned on the test set.
+The 32-frame audio setting outperforms both the 16-frame and 64-frame settings, indicating that a moderate acoustic context is more suitable for this task. The weighted-BCE variant, trained under the earlier recipe, underperforms the focal-loss main configuration. Probability averaging over the five seeds improves the AUC from 0.788 (single-model mean) to 0.799 at an essentially unchanged F1-score (0.788 vs.\ 0.789), with the ensemble size fixed to the full seed set rather than tuned on the test set.
 
-
-
-
-\textit{Facial-region sensitivity.}
-Table~\ref{tab:region_ablation} evaluates the sensitivity of the proposed framework to facial-region identity encoding by masking each region feature and retraining the model. Under the five-seed protocol, masking any single region changes the mean F1-score by at most 1.5\% (inner mouth), and every drop is smaller than the corresponding seed-level standard deviation; paired Wilcoxon tests confirm that none of the region masks differs significantly from the full model. The asymmetric left-eye/right-eye sensitivity observed in our preliminary single-seed experiments does not survive multi-seed evaluation and is attributable to seed-level noise rather than to a clinically meaningful asymmetry. These results indicate that the AU-informed graph is robust to region-level perturbations and does not rely on any single facial region.
-
-
-
-
-
-
-
-
-\begin{table}[t]
+\begin{table}[!t]
 \centering
-\caption{Ablation on modalities and fusion. Multi-seed rows report mean$\pm$std over five seeds; the face-only row is a single-seed result.}
-\label{tab:fusion_ablation}
+\caption{Modality, fusion, and training-design ablation (five seeds, mean$\pm$std). $^\dagger$Single seed. $^*$Four seeds. $^\ddagger$Earlier training recipe with weighted BCE (Sec.~\ref{sec:setup}). ``Full'' is the main configuration.}
+\label{tab:fusion_design}
 \scriptsize
-\setlength{\tabcolsep}{1.5pt}
-\begin{tabular}{lccccc}
-\toprule[1.2pt]
-Configuration & Acc & Prec & Rec & F1 & AUC \\
-\midrule[0.8pt]
-Face only & 0.637 & 0.660 & 0.772 & 0.712 & 0.640 \\
-Audio only & 0.684{\scriptsize$\pm$.016} & 0.697{\scriptsize$\pm$.024} & 0.810{\scriptsize$\pm$.033} & 0.748{\scriptsize$\pm$.009} & 0.742{\scriptsize$\pm$.014} \\
-Face+Audio (concat) & 0.716{\scriptsize$\pm$.017} & 0.710{\scriptsize$\pm$.029} & 0.870{\scriptsize$\pm$.048} & 0.780{\scriptsize$\pm$.009} & 0.774{\scriptsize$\pm$.012} \\
-Face+Audio (gated) & 0.734{\scriptsize$\pm$.010} & 0.731{\scriptsize$\pm$.015} & 0.857{\scriptsize$\pm$.032} & \textbf{0.789}{\scriptsize$\pm$.010} & \textbf{0.788}{\scriptsize$\pm$.009} \\
-\bottomrule[1.2pt]
-\end{tabular}
-\end{table}
-
-\begin{table}[t]
-\centering
-\caption{Ablation on audio length, loss function, and seed ensemble (five seeds, mean$\pm$std; ensemble rows aggregate the five seeds).}
-\label{tab:design_ablation}
-\footnotesize
+\setlength{\tabcolsep}{3pt}
 \begin{tabular}{lcc}
 \toprule[1.2pt]
 Setting & F1 & AUC \\
 \midrule[0.8pt]
+Face only$^{\dagger\ddagger}$ & 0.712 & 0.640 \\
+Audio only$^\ddagger$ & 0.748{\scriptsize$\pm$.009} & 0.742{\scriptsize$\pm$.014} \\
+Face+Audio (concat) & 0.780{\scriptsize$\pm$.009} & 0.774{\scriptsize$\pm$.012} \\
 Audio 16 frames & 0.756{\scriptsize$\pm$.017} & 0.775{\scriptsize$\pm$.007} \\
-Audio 32 frames & \textbf{0.789}{\scriptsize$\pm$.010} & \textbf{0.788}{\scriptsize$\pm$.009} \\
 Audio 64 frames & 0.777{\scriptsize$\pm$.022} & 0.770{\scriptsize$\pm$.018} \\
+Weighted BCE$^{*\ddagger}$ & 0.778{\scriptsize$\pm$.015} & 0.771{\scriptsize$\pm$.013} \\
 \midrule[0.8pt]
-Weighted BCE & 0.777{\scriptsize$\pm$.013} & 0.771{\scriptsize$\pm$.011} \\
-Focal loss & \textbf{0.789}{\scriptsize$\pm$.010} & \textbf{0.788}{\scriptsize$\pm$.009} \\
-\midrule[0.8pt]
-Single model & 0.789{\scriptsize$\pm$.010} & 0.788{\scriptsize$\pm$.009} \\
-5-seed ensemble & 0.788 & \textbf{0.799} \\
+Face+Audio (gated, full) & \textbf{0.789}{\scriptsize$\pm$.010} & \textbf{0.788}{\scriptsize$\pm$.009} \\
 \bottomrule[1.2pt]
 \end{tabular}
 \end{table}
 
-\begin{table}[t]
-\centering
-\caption{Facial-region sensitivity analysis (five seeds, mean$\pm$std). ``Mask'' zeros the one-hot encoding of the corresponding region. All F1 drops are smaller than the seed-level standard deviation.}
-\label{tab:region_ablation}
-\footnotesize
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{clccc}
-\toprule[1.0pt]
-Rank & Region & F1 & AUC & F1 drop \\
-\midrule[0.8pt]
--- & Full model & 0.786{\scriptsize$\pm$.012} & 0.786{\scriptsize$\pm$.014} & -- \\
-\midrule[0.8pt]
-1 & Inner mouth & 0.775{\scriptsize$\pm$.017} & 0.794{\scriptsize$\pm$.014} & -1.5\% \\
-2 & Nose bridge & 0.778{\scriptsize$\pm$.015} & 0.794{\scriptsize$\pm$.023} & -1.0\% \\
-3 & Right eye & 0.779{\scriptsize$\pm$.013} & 0.798{\scriptsize$\pm$.008} & -0.9\% \\
-4 & Nose bottom & 0.780{\scriptsize$\pm$.005} & 0.792{\scriptsize$\pm$.015} & -0.8\% \\
-5 & Face contour & 0.780{\scriptsize$\pm$.010} & 0.784{\scriptsize$\pm$.011} & -0.7\% \\
-6 & Left eye & 0.781{\scriptsize$\pm$.010} & 0.799{\scriptsize$\pm$.005} & -0.7\% \\
-7 & Left eyebrow & 0.782{\scriptsize$\pm$.022} & 0.789{\scriptsize$\pm$.016} & -0.5\% \\
-8 & Right eyebrow & 0.783{\scriptsize$\pm$.015} & 0.790{\scriptsize$\pm$.013} & -0.4\% \\
-9 & Outer mouth & 0.786{\scriptsize$\pm$.007} & 0.801{\scriptsize$\pm$.006} & +0.0\% \\
-\bottomrule[1.0pt]
-\end{tabular}
-\end{table}
+\textit{Facial-region sensitivity.}
+Masking each facial region's identity encoding and retraining under the five-seed protocol changes the mean F1-score by at most 1.5\% (inner mouth), and every drop is smaller than the corresponding seed-level standard deviation; paired Wilcoxon tests detect no significant difference from the full model for any region. The asymmetric left-eye/right-eye sensitivity observed in our preliminary single-seed experiments did not replicate across seeds. These results indicate that the AU-informed graph does not rely on any single facial region.
 
-
-
-
-
-
-
-
-\subsection{Visualization and Discussion}
-
-The AU-informed facial graph in Fig.~\ref{fig:face_graph} organizes landmarks according to local facial action-related regions, while temporal edges connect the same landmark across consecutive frames, constraining message passing to facial-topology relations and temporal continuity. For the audio branch, Fig.~\ref{fig:audio_graph} presents the frame-level acoustic feature map, the bidirectional temporal chain, and the learned readout weights; the unevenly distributed readout weights indicate that different acoustic segments contribute unequally to the graph-level audio representation. Together, the two visualizations provide auxiliary evidence that structured graph representations are useful for modeling facial-audio behavior in vlog-based depression detection.
-
-\textit{Limitations.} The current design summarizes each modality into a single graph-level embedding before fusion, which may discard fine-grained temporal correspondences between facial motion and speech, and the fixed temporal chains only encode adjacent-frame relations, leaving variable-delay or longer-range audio-visual interactions unmodeled. Frame-level cross-modal alignment with adaptive temporal receptive fields is a promising future direction. In addition, the two evaluation datasets are of moderate scale, and component-level differences at this scale are smaller than seed-level variance.
-
-
+\textit{Limitations.}
+The current design summarizes each modality into a single graph-level embedding before fusion, which may discard fine-grained temporal correspondences between facial motion and speech, and the fixed temporal chains encode only adjacent-frame relations; frame-level cross-modal alignment is a promising future direction. In addition, both datasets are of moderate scale, and with five seeds the minimum attainable Wilcoxon $p$-value is 0.0625, so component-level effects below seed-level variance cannot be resolved.
 
 \section{Conclusion}
 
-This paper presented AFGNN, an AU-informed facial-audio graph network for vlog-based depression detection. The method organizes facial landmarks and acoustic descriptors into structured graph representations and integrates them through graph-level gated fusion. Evaluated under a five-seed protocol on D-Vlog, AFGNN achieves an F1-score of 0.788 and an AUC of 0.799, and outperforms a strong Mamba-based baseline re-run under the identical official split. The framework also transfers to LMVD without hyper-parameter tuning, and remains robust to missing facial input and acoustic noise. Future work will explore frame-level cross-modal alignment for fine-grained audio-visual temporal correspondences and evaluation on larger datasets.
+This paper presented AFGNN, an AU-informed facial-audio graph network for vlog-based depression detection that organizes facial landmarks and acoustic descriptors into structured graph representations integrated through graph-level gated fusion. Evaluated under a five-seed protocol on D-Vlog, AFGNN achieves an F1-score of 0.788 and an AUC of 0.799, and outperforms a strong Mamba-based baseline re-run under the identical official split. Retrained on LMVD with hyper-parameters carried over from D-Vlog, the framework maintains its performance, and it remains robust to missing facial input and acoustic noise. Future work will explore frame-level cross-modal alignment for fine-grained audio-visual correspondences and larger-scale evaluation.
 
 \bibliographystyle{IEEEtran}
 {\footnotesize\bibliography{AFGNN}}
